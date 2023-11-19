@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, TypeVar
 from uuid import UUID
 
 from litestar import Controller, delete, get, post, put
@@ -11,7 +11,8 @@ from ..exceptions import UserNotFoundException
 from ..guards import admin_guard
 from ..services import UserService
 
-MultiPartForm = Body(media_type=RequestEncodingType.MULTI_PART)
+T = TypeVar("T")
+JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
 
 
 class UserController(Controller):
@@ -32,7 +33,7 @@ class UserController(Controller):
         raise UserNotFoundException(user_id)
 
     @put("/{user_id:uuid}", guards=[admin_guard], status_code=HTTP_200_OK)
-    async def update_user_handler(self, user_id: UUID, data: Annotated[UserUpdate0DTO, MultiPartForm]) -> UserGetDTO:
+    async def update_user_handler(self, user_id: UUID, data: JsonEncoded[UserUpdate0DTO]) -> UserGetDTO:
         """Updates a specific `User`."""
         if user := await self.user_service.update_user(user_id, data):
             return user
@@ -46,7 +47,7 @@ class UserController(Controller):
         raise UserNotFoundException(user_id)
 
     @post("/register", status_code=HTTP_201_CREATED)
-    async def register_user_handler(self, data: Annotated[UserRegisterDTO, MultiPartForm]) -> UserGetDTO:
+    async def register_user_handler(self, data: JsonEncoded[UserRegisterDTO]) -> UserGetDTO:
         """Registers a new `User`."""
         return await self.user_service.add_user(data)
 
