@@ -1,7 +1,9 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
 class Question(BaseModel):
-    id: str
+    id: UUID | None
     question: str
     version: int
