@@ -24,14 +24,20 @@ class UserGetDTO(FromDictMixin):
     id: UUID
     email: str
     name: str
-    is_admin: bool
+    is_system_admin: bool
     is_verified: bool
 
 
 @dataclasses.dataclass
-class UserUpdate0DTO(FromDictMixin):
+class UserUpdateDTO(FromDictMixin):
     email: str | None = None
     name: str | None = None
     password: str | None = None
-    is_admin: bool | None = None
+    is_system_admin: bool | None = None
     is_verified: bool | None = None
+
+
+@dataclasses.dataclass
+class UserLoginDTO(FromDictMixin):
+    email: str
+    password: str

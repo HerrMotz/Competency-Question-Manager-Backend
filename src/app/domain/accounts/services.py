@@ -1,12 +1,37 @@
 from uuid import UUID, uuid4
 
-from .dtos import UserGetDTO, UserRegisterDTO, UserUpdate0DTO
-from .exceptions import EmailInUseException, NameInUseException
+from .authentication.exceptions import (
+    InvalidPasswordFormatException,
+    InvalidPasswordLengthException,
+)
+from .authentication.services import EncryptionService, PasswordHash
+from .dtos import UserGetDTO, UserLoginDTO, UserRegisterDTO, UserUpdateDTO
+from .exceptions import DelegateHTTPException, EmailInUseException, NameInUseException
 from .models import User
 
 
 class UserService:
+    encryption_service = EncryptionService()
     mock_db: dict[UUID, User] = {}
+
+    def __init__(self) -> None:
+        # TODO: move this into the database setup once established
+        password = self.encryption_service.hash_password("TestPassword123")
+        id = uuid4()
+        test_user = User(id, "admin@test.de", "admin", password.hash, password.salt, True, True)
+        self.mock_db[test_user.id] = test_user
+
+    def _encrypt_password(self, password: str) -> PasswordHash:
+        """Encrypts a given password.
+
+        :param password: Password to encrypt.
+        :raises DelegateHTTPException: If the given password is malformed.
+        :return: A hashed password.
+        """
+        try:
+            return self.encryption_service.hash_password(password)
+        except (InvalidPasswordFormatException, InvalidPasswordLengthException) as exception:
+            raise DelegateHTTPException(exception)
 
     async def get_users(self) -> list[UserGetDTO]:
         """Gets all `Users` from the database.
@@ -25,7 +50,20 @@ class UserService:
             return UserGetDTO.from_dict(**user.__dict__)
         return None
 
-    async def update_user(self, user_id: UUID, data: UserUpdate0DTO) -> UserGetDTO | None:
+    async def get_user_by_credentials(self, data: UserLoginDTO) -> User | None:
+        """Gets a `User` by his login credentials.
+
+        :param data: The `User's` credentials.
+        :return: A matching `User` if any.
+        """
+        if users := [*filter(lambda user: user.email == data.email, self.mock_db.values())]:
+            user = users[0]
+            if user.password_hash == self.encryption_service.resolve_password(data.password, user.password_salt):
+                return user
+
+        return None
+
+    async def update_user(self, user_id: UUID, data: UserUpdateDTO) -> UserGetDTO | None:
         """Updates a specific `User` by his `id` and the given data.
 
         :param user_id: The `Users` `id`.
@@ -35,9 +73,14 @@ class UserService:
         if user := self.mock_db.get(user_id, None):
             user.email = data.email if data.email else user.email
             user.name = data.name if data.name else user.name
-            user.password = data.password if data.password else user.password
-            user.is_admin = data.is_admin if data.is_admin else user.is_admin
+            user.is_system_admin = data.is_system_admin if data.is_system_admin else user.is_system_admin
             user.is_verified = data.is_verified if data.is_verified else user.is_verified
+
+            if data.password:
+                password = self._encrypt_password(data.password)
+                user.password_hash = password.hash
+                user.password_salt = password.salt
+
             self.mock_db[user.id] = user
             return UserGetDTO.from_dict(**user.__dict__)
         return None
@@ -70,7 +113,8 @@ class UserService:
             raise EmailInUseException(data.email)
 
         uuid = uuid4()
-        user = User(uuid, data.email, data.name, data.password, False, False)
+        password = self._encrypt_password(data.password)
+        user = User(uuid, data.email, data.name, password.hash, password.salt, False, False)
         self.mock_db[uuid] = user
         return UserGetDTO.from_dict(**user.__dict__)
 
@@ -85,3 +129,6 @@ class UserService:
             self.mock_db[user.id] = user
             return UserGetDTO.from_dict(**user.__dict__)
         return None
+
+
+MOCK_USER_SERVICE = UserService()
