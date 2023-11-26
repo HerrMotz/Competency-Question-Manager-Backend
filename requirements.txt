@@ -1,2 +1,2 @@
-litestar[standard, structlog]
+litestar[standard, structlog, jwt]
 pydantic
