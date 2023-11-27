@@ -16,10 +16,20 @@ class UserService:
 
     def __init__(self) -> None:
         # TODO: move this into the database setup once established
-        password = self.encryption_service.hash_password("TestPassword123")
+        self.mock_db = {
+            user.id: user
+            for user in [
+                self._get_mock_user("Chiara", "HalloWelt123"),
+                self._get_mock_user("Daniel", "HalloWelt123"),
+                self._get_mock_user("Malte", "HalloWelt123"),
+                self._get_mock_user("Admin", "HalloWelt123", True),
+            ]
+        }
+
+    def _get_mock_user(self, name: str, initial_password: str, admin: bool = False) -> User:
         id = uuid4()
-        test_user = User(id, "admin@test.de", "admin", password.hash, password.salt, True, True)
-        self.mock_db[test_user.id] = test_user
+        password = self.encryption_service.hash_password(initial_password)
+        return User(id, f"{name.lower()}@uni-jena.de", name, password.hash, password.salt, admin, True)
 
     def _encrypt_password(self, password: str) -> PasswordHash:
         """Encrypts a given password.

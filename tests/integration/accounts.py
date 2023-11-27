@@ -54,8 +54,8 @@ def test_register_new_user(test_client: TestClient[Litestar]) -> None:
 def test_login_admin(test_client: TestClient[Litestar]) -> None:
     with test_client as client:
         data = {
-            "email": "admin@test.de",
-            "password": "TestPassword123",
+            "email": "admin@uni-jena.de",
+            "password": "HalloWelt123",
         }
         response = client.post(f"/users/login", json=data)
         assert response.status_code == HTTP_201_CREATED
