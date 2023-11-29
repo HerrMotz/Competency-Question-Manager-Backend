@@ -1,0 +1,29 @@
+[project]
+name = "CQ_Manager"
+version = "0.0.1"
+authors = [
+    { name = "Chiara Tunc", email = "chiara.tunc@uni-jena.de" },
+    { name = "Dominik Buschold", email = "dominik.buschold@uni-jena.de" },
+    { name = "Daniel Motz", email = "daniel.motz@uni-jena.de" },
+    { name = "Malte Weber", email = "malte.weber@uni-jena.de" },
+]
+description = "A competency question management API."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://git.uni-jena.de/fusion/teaching/project/2023wise/swep/competency-questions-management-for-ontology-development/cq-manager"
+Issues = "https://git.uni-jena.de/fusion/teaching/project/2023wise/swep/competency-questions-management-for-ontology-development/cq-manager/-/issues"
+
+[tool.black]
+line-length = 119
+
+[tool.isort]
+profile = "black"
+
+[tool.pyright]
+typeCheckingMode = "strict"
