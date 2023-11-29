@@ -7,7 +7,7 @@ Rating = Annotated[int, Field(gt=0, le=5)]
 
 
 class Question(BaseModel):
-    id: UUID | None
+    id: UUID | None = None
     question: str
     version: int
     rating: Rating

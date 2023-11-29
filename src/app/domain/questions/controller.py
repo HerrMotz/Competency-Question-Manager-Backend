@@ -1,6 +1,7 @@
-from uuid import UUID
+import logging
+from uuid import UUID, uuid4
 
-from litestar import Controller, post, get, delete, put
+from litestar import Controller, post, get, delete
 from litestar.exceptions import HTTPException
 
 from .models import Question
@@ -12,9 +13,9 @@ class QuestionController(Controller):
 
     @post("/")
     async def create_question(self, data: Question) -> Question:
-        question_id = UUID()
+        question_id = uuid4()
         self.mock_db[question_id] = Question(
-            question_id=question_id, question=data.question, version=data.version
+            id=question_id, question=data.question, version=data.version, rating=data.rating
         )
         return self.mock_db.get(question_id)
 
