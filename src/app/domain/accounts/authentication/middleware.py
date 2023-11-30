@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import timedelta
 from typing import Any, Callable
 from uuid import UUID
@@ -47,8 +47,10 @@ class AuthenticationMiddleware:
         """
         ident = user.id.hex
         extra = {"email": user.email}
-        body = UserGetDTO.from_dict(**user.__dict__)
-        return self.authenticator.login(ident, token_extras=extra, response_body=body)
+        body = asdict(UserGetDTO.from_dict(**user.__dict__))
+        response = self.authenticator.login(ident, token_extras=extra, response_body=body)
+        response.content["token"] = response.headers.get(self.header)
+        return response
 
     @property
     def dependency(self) -> Provide:
