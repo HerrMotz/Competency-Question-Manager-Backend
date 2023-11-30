@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  cq-manager:
+    build: .
+    container_name: cq-manager
+    image: cq-manager:v1
+    ports:
+      - "8000:8000"
