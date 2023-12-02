@@ -1,13 +1,12 @@
-import dataclasses
-from uuid import UUID
+from litestar.contrib.sqlalchemy.base import UUIDAuditBase
+from sqlalchemy import LargeBinary
+from sqlalchemy.orm import Mapped, mapped_column
 
 
-@dataclasses.dataclass
-class User:
-    id: UUID
-    email: str
-    name: str
-    password_hash: bytes
-    password_salt: bytes
-    is_system_admin: bool
-    is_verified: bool
+class User(UUIDAuditBase):
+    email: Mapped[str] = mapped_column(unique=True)
+    name: Mapped[str] = mapped_column(unique=True)
+    password_hash: Mapped[bytes] = mapped_column(LargeBinary(length=128))
+    password_salt: Mapped[bytes] = mapped_column(LargeBinary(length=128))
+    is_system_admin: Mapped[bool]
+    is_verified: Mapped[bool]
