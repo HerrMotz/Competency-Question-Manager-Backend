@@ -1,2 +1,3 @@
-litestar[standard, structlog, jwt]
+litestar[standard, structlog, jwt, sqlalchemy]
+aiosqlite 
 pydantic

@@ -6,16 +6,20 @@ from litestar.openapi import OpenAPIConfig
 from domain.questions.controller import QuestionController
 from domain.accounts.controllers import UserController
 from domain.accounts.authentication.middleware import AuthenticationMiddleware
+from lib.orm import AsyncSqlPlugin
 
 cors_config = CORSConfig(allow_origins=[os.environ["CORS_ALLOW_ORIGIN"]])
 openapi_config = OpenAPIConfig("CQ Manager", "0.0.1", use_handler_docstrings=True)
 
 authenticator = AuthenticationMiddleware("Super Secret Token", "Authorization", 24)
+sql_plugin = AsyncSqlPlugin()
 
 app = Litestar(
     route_handlers=[QuestionController, UserController],
     cors_config=cors_config,
     openapi_config=openapi_config,
-    on_app_init=[authenticator.on_app_init],
+    plugins=[sql_plugin.plugin],
+    on_app_init=[sql_plugin.on_app_init, authenticator.on_app_init],
+    on_startup=[sql_plugin.on_startup],
     dependencies={"authenticator": authenticator.dependency},
 )
