@@ -1,43 +1,35 @@
-import dataclasses
-from typing import Any, Self
 from uuid import UUID
 
-
-@dataclasses.dataclass
-class FromDictMixin:
-    @classmethod
-    def from_dict(cls, **kwargs: dict[str, Any]) -> Self:
-        names = {field.name for field in dataclasses.fields(cls)}
-        arguments = {key: value for key, value in kwargs.items() if key in names}
-        return cls(**arguments)
+from lib.dto import BaseModel
+from pydantic import EmailStr
 
 
-@dataclasses.dataclass
-class UserRegisterDTO(FromDictMixin):
-    email: str
-    name: str
-    password: str
-
-
-@dataclasses.dataclass
-class UserGetDTO(FromDictMixin):
+class UserGetDTO(BaseModel):
     id: UUID
-    email: str
+    email: EmailStr
     name: str
     is_system_admin: bool
     is_verified: bool
 
 
-@dataclasses.dataclass
-class UserUpdateDTO(FromDictMixin):
-    email: str | None = None
+class UserRegisterDTO(BaseModel):
+    email: EmailStr
+    name: str
+    password: str
+
+
+class UserUpdateDTO(BaseModel):
+    email: EmailStr | None = None
     name: str | None = None
     password: str | None = None
     is_system_admin: bool | None = None
     is_verified: bool | None = None
 
 
-@dataclasses.dataclass
-class UserLoginDTO(FromDictMixin):
+class UserLoginDTO(BaseModel):
     email: str
     password: str
+
+
+class UserAccessDTO(UserGetDTO):
+    token: str | None = None
