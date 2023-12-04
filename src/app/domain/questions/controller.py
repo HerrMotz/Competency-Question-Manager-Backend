@@ -16,12 +16,16 @@ class QuestionController(Controller):
     rating_service = RatingService()
 
     async def aggregate_rating(self, question_id: UUID) -> IndividualRating:
+        """
+        :param question_id: The ID of the question to calculate the aggregate rating for.
+        :return: The aggregate rating of the question.
+        """
         ratings = await self.rating_service.get_ratings(question_id)
         if len(ratings) > 0:
             mean = sum([rating.rating for rating in ratings]) / len(ratings)
             return math.ceil(mean) if mean % 1 >= 0.5 else int(mean)
         else:
-            0
+            return 0
 
     @post("/")
     async def create_question(self, data: Question) -> Question:
