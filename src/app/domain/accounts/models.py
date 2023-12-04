@@ -10,3 +10,10 @@ class User(UUIDAuditBase):
     password_salt: Mapped[bytes] = mapped_column(LargeBinary(length=128))
     is_system_admin: Mapped[bool]
     is_verified: Mapped[bool]
+
+    # TODO: add relationships
+    # projects: Mapped[list["Project"]] = relationship(back_populates="members")
+    # groups: Mapped[list["Group"]] = relationship(back_populates="members")
+    # questions: Mapped[list["Question"]] = relationship(back_populates="author")
+    # comments: Mapped[list["Comment"]] = relationship(back_populates="author")
+    # ratings: Mapped[list["Rating"]] = relationship(back_populates="author")
