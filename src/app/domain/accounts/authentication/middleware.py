@@ -1,17 +1,17 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Any, Callable
-from uuid import UUID
 
+from lib.orm import session
 from litestar import Response
 from litestar.config.app import AppConfig
 from litestar.connection import ASGIConnection
 from litestar.contrib.jwt import JWTAuth, Token
 from litestar.di import Provide
+from sqlalchemy import select
 
-from ..dtos import UserGetDTO
+from ..dtos import UserAccessDTO
 from ..models import User
-from ..services import MOCK_USER_SERVICE
 
 
 @dataclass(frozen=True)
@@ -35,11 +35,12 @@ class AuthenticationMiddleware:
         object.__setattr__(self, "authenticator", authenticator)
 
     async def _get_user_from_token(self, token: Token, _: "ASGIConnection[Any, Any, Any, Any]") -> User | None:
-        # TODO: replace mock db with real database
-        user_id = UUID(token.sub)
-        return MOCK_USER_SERVICE.mock_db.get(user_id, None)
+        async with session() as _session:
+            if user := await _session.scalar(select(User).where(User.id == token.sub)):
+                return user
+        return None
 
-    def login(self, user: User) -> Response[UserGetDTO]:
+    def login(self, user: User) -> Response[UserAccessDTO]:
         """Handles `User` login and returns a `Response` with set headers.
 
         :param user: The `User` to login.
@@ -47,9 +48,9 @@ class AuthenticationMiddleware:
         """
         ident = user.id.hex
         extra = {"email": user.email}
-        body = asdict(UserGetDTO.from_dict(**user.__dict__))
+        body = UserAccessDTO.model_validate(user)
         response = self.authenticator.login(ident, token_extras=extra, response_body=body)
-        response.content["token"] = response.headers.get(self.header)
+        response.content.token = response.headers.get(self.header)
         return response
 
     @property
