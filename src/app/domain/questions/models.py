@@ -1,14 +1,12 @@
-from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-Rating = Annotated[int, Field(gt=0, le=5)]
+from ..rating.models import Rating
 
 
 class Question(BaseModel):
     id: UUID | None = None
-    question: str
-    version: int
-    rating: Rating
-
+    question: str | None = None
+    version: int | None = None
+    rating: Rating | None = None
