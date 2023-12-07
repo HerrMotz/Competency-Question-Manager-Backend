@@ -1,4 +1,3 @@
-from typing import Annotated
 from uuid import UUID
 
 from pydantic import Field
@@ -8,7 +7,7 @@ from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy.orm import Mapped
 
 
-Rating = Annotated[int, Field(gt=0, le=5)]
+from ..rating.models import Rating
 
 
 class QuestionDTO(BaseModel):

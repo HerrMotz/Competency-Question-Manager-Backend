@@ -1,16 +1,35 @@
 from uuid import UUID
+import logging
+import math
+from uuid import UUID, uuid4
 
 from litestar import Controller, post, get, delete
 from litestar.exceptions import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .models import Question
+from ..rating.models import IndividualRating
+from ..rating.services import RatingService
 from .models import Question, QuestionDTO
 
 
 class QuestionController(Controller):
     path = "/questions/"
     mock_db: dict[UUID, Question] = {}
+    rating_service = RatingService()
+
+    async def aggregate_rating(self, question_id: UUID) -> IndividualRating:
+        """
+        :param question_id: The ID of the question to calculate the aggregate rating for.
+        :return: The aggregate rating of the question.
+        """
+        ratings = await self.rating_service.get_ratings(question_id)
+        if len(ratings) > 0:
+            mean = sum([rating.rating for rating in ratings]) / len(ratings)
+            return math.ceil(mean) if mean % 1 >= 0.5 else int(mean)
+        else:
+            return 0
 
     @post("/")
     async def create_question(self, session: AsyncSession, data: QuestionDTO) -> QuestionDTO:
