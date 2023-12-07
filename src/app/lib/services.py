@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase
 
 from .orm import session as session_maker
+from domain.questions.models import Question
 
 
 class MockDataService:
@@ -55,6 +56,11 @@ class MockDataService:
             is_system_admin=True,
             is_verified=True,
         ),
+        Question(
+            question = "How is it?",
+            version = 1,
+            author_id = UUID("a8693768-244b-4b87-9972-548034df1cc3")
+        )
     ]
 
     mock_data: list[DeclarativeBase] = [*mock_users]
