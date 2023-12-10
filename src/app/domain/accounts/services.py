@@ -1,5 +1,8 @@
+from typing import Iterable
 from uuid import UUID, uuid4
 
+from litestar.background_tasks import BackgroundTask
+from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -135,6 +138,18 @@ class UserService:
             user.is_verified = True
             return UserGetDTO.model_validate(user)
         return None
+
+    @staticmethod
+    async def get_system_users(session: AsyncSession, emails: Iterable[EmailStr]) -> tuple[Iterable[User], BackgroundTask | None]:
+        mails = set(emails)
+
+        users = await session.scalars(select(User).where(User.email.in_(mails)))
+        non_users = mails - set(map(lambda user: user.email, users))
+        invite_task = BackgroundTask(lambda: map(lambda email: ..., non_users)) if non_users else None
+
+        # TODO: handle non registered users, dummy user -> send invite mail
+
+        return users, invite_task
 
 
 MOCK_USER_SERVICE = UserService()
