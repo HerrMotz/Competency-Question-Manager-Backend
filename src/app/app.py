@@ -7,6 +7,7 @@ from domain.rating.controller import RatingController
 from domain.questions.controller import QuestionController
 from domain.accounts.controllers import UserController
 from domain.accounts.authentication.middleware import AuthenticationMiddleware
+from domain.projects.controllers import ProjectController
 from lib.orm import AsyncSqlPlugin
 from lib.services import MockDataService
 
@@ -19,7 +20,7 @@ sql_plugin = AsyncSqlPlugin()
 mock_data = MockDataService()
 
 app = Litestar(
-    route_handlers=[QuestionController, UserController, RatingController],
+    route_handlers=[QuestionController, UserController, RatingController, ProjectController],
     cors_config=cors_config,
     openapi_config=openapi_config,
     plugins=[sql_plugin.plugin],
