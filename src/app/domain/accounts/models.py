@@ -2,7 +2,9 @@ from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from domain.questions.models import Question
+from ..questions.models import Question
+
+from ..rating.models import Rating
 
 
 class User(UUIDAuditBase):
@@ -12,7 +14,8 @@ class User(UUIDAuditBase):
     password_salt: Mapped[bytes] = mapped_column(LargeBinary(length=128))
     is_system_admin: Mapped[bool]
     is_verified: Mapped[bool]
-    questions: Mapped[list["Question"]] = relationship(back_populates="author")
+    questions: Mapped[list["Question"]] = relationship( back_populates="author")
+    ratings: Mapped[list["Rating"]] = relationship( back_populates="user")
 
     # TODO: add relationships
     # projects: Mapped[list["Project"]] = relationship(back_populates="members")
