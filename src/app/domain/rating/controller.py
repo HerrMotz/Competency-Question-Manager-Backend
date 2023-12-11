@@ -1,9 +1,10 @@
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from litestar import Controller, post, Request, get
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import Rating
+from .models import RatingDTO, Rating
 from .services import RatingService
 from ..accounts.models import User
 
@@ -13,10 +14,12 @@ class RatingController(Controller):
     service = RatingService()
 
     @post("/")
-    async def create_rating(self, data: Rating, request: Request[User, Any, Any]) -> Rating:
-        return await self.service.set_rating(data.model_copy(update={"user_id": request.user.id}))
+    async def set_rating(self, data: RatingDTO, session: AsyncSession, request: Request[User, Any, Any]) -> RatingDTO:
+        return await self.service.set_rating(
+            session=session,
+            rating=RatingDTO(rating=data.rating, user_id=request.user.id, question_id=data.question_id),
+        )
 
-    @get(path="/{question_id:uuid}")
-    async def get_rating(self, question_id: UUID) -> list[Rating]:
-        return await self.service.get_ratings(question_id)
-
+    @get(path="/")
+    async def get_rating(self, session: AsyncSession, user_id: UUID, question_id: UUID) -> list[RatingDTO]:
+        return await self.service.get_rating(user_id=user_id, question_id=question_id, session=session)
