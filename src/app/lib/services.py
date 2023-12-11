@@ -58,7 +58,6 @@ class MockDataService:
         ),
         Question(
             question = "How is it?",
-            version = 1,
             author_id = UUID("a8693768-244b-4b87-9972-548034df1cc3")
         )
     ]
