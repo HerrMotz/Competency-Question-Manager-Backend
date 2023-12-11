@@ -1,22 +1,22 @@
-from uuid import UUID
-import logging
 import math
+from typing import Any
 from uuid import UUID, uuid4
 
-from litestar import Controller, post, get, delete
+from litestar import Controller, post, get, delete, Request
 from litestar.exceptions import HTTPException
+from litestar.status_codes import HTTP_204_NO_CONTENT, HTTP_200_OK, HTTP_201_CREATED
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from .models import Question
+from .models import Question, QuestionCreateDTO, QuestionDetailDTO, QuestionOverviewDTO, QuestionCreatedDTO
+from ..accounts.models import User
 from ..rating.models import IndividualRating
 from ..rating.services import RatingService
-from .models import Question, QuestionDTO
 
 
 class QuestionController(Controller):
     path = "/questions/"
-    mock_db: dict[UUID, Question] = {}
     rating_service = RatingService()
 
     async def aggregate_rating(self, question_id: UUID) -> IndividualRating:
@@ -31,8 +31,10 @@ class QuestionController(Controller):
         else:
             return 0
 
-    @post("/")
-    async def create_question(self, session: AsyncSession, data: QuestionDTO) -> QuestionDTO:
+    @post("/", status_code=HTTP_201_CREATED)
+    async def create_question(
+        self, session: AsyncSession, data: QuestionCreateDTO, request: Request[User, Any, Any]
+    ) -> QuestionCreatedDTO:
         """
         Creates a question in the session.
 
@@ -40,22 +42,33 @@ class QuestionController(Controller):
         :param data: The question data to be created.
         :return: The created question data.
         """
-        question = Question(question=data.question, version=data.version)
+        question = Question(id=uuid4(), question=data.question, author_id=request.user.id)
         session.add(question)
-        await session.commit()
-        return data
+        return QuestionCreatedDTO.model_validate(question)
 
-    @get("/")
-    async def get_questions(self, session: AsyncSession) -> list[QuestionDTO]:
+    @get("/", status_code=HTTP_200_OK)
+    async def get_questions(self, session: AsyncSession) -> list[QuestionOverviewDTO]:
         """
         :param session: AsyncSession object used to execute the database query and retrieve questions.
         :return: A list of QuestionDTO objects representing the retrieved questions.
         """
-        questions = await session.execute(select(Question))
-        return [QuestionDTO.model_validate(question) for question in questions.scalars()]
+        questions = await session.scalars(
+            select(Question).options(selectinload(Question.author)).options(selectinload(Question.ratings))
+        )
+        question_dtos = [
+            QuestionOverviewDTO(
+                id=q.id,
+                question=q.question,
+                author_id=q.author_id,
+                author_name=q.author.name,
+                rating=sum([rating.rating for rating in q.ratings]) / len(q.ratings) if len(q.ratings) > 0 else 0,
+            )
+            for q in questions.all()
+        ]
+        return question_dtos
 
-    @get(path="/{question_id:uuid}")
-    async def get_question(self, session: AsyncSession, question_id: UUID) -> QuestionDTO:
+    @get(path="/{question_id:uuid}", status_code=HTTP_200_OK)
+    async def get_question(self, session: AsyncSession, question_id: UUID) -> QuestionDetailDTO:
         """
         Retrieves a question by its ID.
 
@@ -64,12 +77,25 @@ class QuestionController(Controller):
         :return: A `QuestionDTO` object containing the retrieved question.
         :raises HTTPException: If the question with the specified ID is not found.
         """
-        question = await session.execute(select(Question).where(Question.id == question_id))
-        if not question.scalar():
-            raise HTTPException(status_code=404, detail="Question not found")
-        return QuestionDTO.model_validate(question.scalar())
+        q = (await session.execute(
+            select(Question)
+            .where(Question.id == question_id)
+            .options(selectinload(Question.author))
+            .options(selectinload(Question.ratings))
+        )).scalar()
 
-    @delete(path="/{question_id:uuid}")
+        if not q:
+            raise HTTPException(status_code=404, detail="Question not found")
+        question_dto = QuestionDetailDTO(
+            id=q.id,
+            question=q.question,
+            ratings=q.ratings,
+            author_id=q.author_id,
+            author_name=q.author.name
+        )
+        return question_dto
+
+    @delete(path="/{question_id:uuid}", status_code=HTTP_204_NO_CONTENT)
     async def delete_question(self, session: AsyncSession, question_id: UUID) -> None:
         """
         Deletes a question from the database.
