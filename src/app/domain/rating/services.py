@@ -1,31 +1,51 @@
 from uuid import UUID, uuid4
 
-from .models import Rating
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_
+
+from .models import RatingDTO, Rating
 
 
 class RatingService:
-    mock_db: dict[UUID, Rating] = {}
-
-    async def set_rating(self, rating: Rating) -> Rating:
+    async def set_rating(self, session: AsyncSession, rating: RatingDTO) -> RatingDTO:
         """
         Set the rating for a specific model and save it to the database.
 
-        :param rating: The rating to be set.
-        :type rating: Rating
+        :param rating: RatingDTO
+        :param session: AsyncSession
         :return: The saved rating.
-        :rtype: Rating
+        :rtype: RatingDTO
         """
-        rating_id = rating.id if rating.id else uuid4()
-        self.mock_db[rating_id] = rating.model_copy(update={'id': rating_id})
-        return self.mock_db[rating_id]
+        if ratingFromDB := await session.scalar(
+            select(Rating).where(Rating.user_id == rating.user_id).where(Rating.question_id == rating.question_id)
+        ):
+            ratingFromDB.rating = ratingFromDB.rating
+            return RatingDTO.model_validate(rating)
+        else:
+            rating = Rating(id=uuid4(), user_id=rating.user_id, question_id=rating.question_id, rating=rating.rating)
+            session.add(rating)
+            return RatingDTO.model_validate(rating)
 
-    async def get_ratings(self, question_id: UUID) -> list[Rating]:
+    async def get_ratings(self, session: AsyncSession, question_id: UUID) -> list[RatingDTO]:
         """
         Get the list of ratings for a given question ID.
 
         :param question_id: The unique ID of the question.
         :type question_id: UUID
         :return: The list of ratings for the question.
-        :rtype: list[Rating]
+        :rtype: list[RatingDTO]
         """
-        return [*filter(lambda x: x.question_id == question_id, self.mock_db.values())]
+        ratings = await session.scalars(select(Rating).where(Rating.question_id == question_id))
+        return [RatingDTO.model_validate(rating) for rating in ratings]
+
+    async def get_rating(self, session: AsyncSession, user_id: UUID, question_id: UUID) -> RatingDTO | None:
+
+        rating = await session.scalar(
+            select(Rating).where(Rating.user_id == user_id).where(Rating.question_id == question_id)
+        )
+        if rating:
+            return RatingDTO.model_validate(rating)
+
+        else:
+            return None
