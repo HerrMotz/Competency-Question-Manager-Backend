@@ -21,4 +21,4 @@ ENV CONNECTION_STRING="sqlite+aiosqlite:///cq-datbase.sqlite"
 EXPOSE 8000
 
 # Run app.py when the container launches
-CMD ["litestar","run","--host","0.0.0.0"]
+CMD ["litestar","run","--host","0.0.0.0","--debug"]
