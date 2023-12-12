@@ -56,13 +56,13 @@ class MockDataService:
             is_system_admin=True,
             is_verified=True,
         ),
-        Question(
-            question = "How is it?",
-            author_id = UUID("a8693768-244b-4b87-9972-548034df1cc3")
-        )
     ]
 
-    mock_data: list[DeclarativeBase] = [*mock_users]
+    mock_questions = [
+        Question(question="How is it?", author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3")),
+    ]
+
+    mock_data: list[DeclarativeBase] = [*mock_users, *mock_questions]
 
     async def _add_mock_model(self, model: DeclarativeBase) -> None:
         async with session_maker() as session:
