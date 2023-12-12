@@ -1,13 +1,13 @@
 from typing import Any
 from uuid import UUID, uuid4
 
-from litestar import Controller, post, Request, get
+from litestar import Controller, Request, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import Rating
-from .dtos import RatingDTO
-from .services import RatingService
 from ..accounts.models import User
+from .dtos import RatingDTO
+from .models import Rating
+from .services import RatingService
 
 
 class RatingController(Controller):

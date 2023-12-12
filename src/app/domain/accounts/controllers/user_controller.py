@@ -8,8 +8,18 @@ from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CON
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..authentication.middleware import AuthenticationMiddleware
-from ..dtos import UserAccessDTO, UserGetDTO, UserLoginDTO, UserRegisterDTO, UserUpdateDTO
-from ..exceptions import UnmatchedCredentialsException, UserNotFoundException, VerificationRequiredException
+from ..dtos import (
+    UserAccessDTO,
+    UserGetDTO,
+    UserLoginDTO,
+    UserRegisterDTO,
+    UserUpdateDTO,
+)
+from ..exceptions import (
+    UnmatchedCredentialsException,
+    UserNotFoundException,
+    VerificationRequiredException,
+)
 from ..guards import system_admin_guard
 from ..services import MOCK_USER_SERVICE
 

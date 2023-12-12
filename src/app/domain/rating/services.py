@@ -1,11 +1,10 @@
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_
 
-from .models import Rating
 from .dtos import RatingDTO
+from .models import Rating
 
 
 class RatingService:

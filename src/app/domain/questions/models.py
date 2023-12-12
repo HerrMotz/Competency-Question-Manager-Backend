@@ -3,7 +3,7 @@ from uuid import UUID
 from lib.dto import BaseModel
 from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, relationship, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..rating.dtos import RatingDTO
 

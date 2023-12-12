@@ -2,17 +2,23 @@ import math
 from typing import Any
 from uuid import UUID, uuid4
 
-from litestar import Controller, post, get, delete, Request
+from litestar import Controller, Request, delete, get, post
 from litestar.exceptions import HTTPException
-from litestar.status_codes import HTTP_204_NO_CONTENT, HTTP_200_OK, HTTP_201_CREATED
+from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from .models import Question, QuestionCreateDTO, QuestionDetailDTO, QuestionOverviewDTO, QuestionCreatedDTO
 from ..accounts.models import User
 from ..rating.models import IndividualRating
 from ..rating.services import RatingService
+from .models import (
+    Question,
+    QuestionCreatedDTO,
+    QuestionCreateDTO,
+    QuestionDetailDTO,
+    QuestionOverviewDTO,
+)
 
 
 class QuestionController(Controller):

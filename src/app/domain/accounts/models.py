@@ -3,7 +3,6 @@ from sqlalchemy import LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..questions.models import Question
-
 from ..rating.models import Rating
 
 
