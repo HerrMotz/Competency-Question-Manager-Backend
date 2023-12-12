@@ -24,6 +24,7 @@ from .models import (
 
 class QuestionController(Controller):
     path = "/questions/"
+    tags = ["Questions"]
     rating_service = RatingService()
 
     @post("/", status_code=HTTP_201_CREATED)

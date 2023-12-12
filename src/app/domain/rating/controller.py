@@ -11,6 +11,7 @@ from .services import RatingService
 
 class RatingController(Controller):
     path = "/ratings"
+    tags = ["Ratings"]
     service = RatingService()
 
     @post("/")
