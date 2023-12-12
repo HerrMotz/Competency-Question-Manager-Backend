@@ -1,11 +1,18 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from lib.dto import BaseModel
 from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, relationship, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..rating.models import RatingDTO
+
+if TYPE_CHECKING:
+    from domain.accounts.models import User
+    from domain.rating.models import Rating
 
 
 class QuestionOverviewDTO(BaseModel):
@@ -47,5 +54,6 @@ class QuestionUpdatedDTO(BaseModel):
 class Question(UUIDAuditBase):
     question: Mapped[str]
     author_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
-    author = relationship("User", back_populates="questions")
-    ratings: Mapped[list["Rating"]] = relationship(back_populates="question")
+    
+    author: Mapped[User] = relationship(back_populates="questions")
+    ratings: Mapped[list[Rating]] = relationship(back_populates="question")
