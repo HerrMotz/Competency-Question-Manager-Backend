@@ -17,6 +17,7 @@ from ..rating.services import RatingService
 
 class QuestionController(Controller):
     path = "/questions/"
+    tags = ["Questions"]
     rating_service = RatingService()
 
     async def aggregate_rating(self, question_id: UUID) -> IndividualRating:

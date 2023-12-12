@@ -1,16 +1,17 @@
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from litestar import Controller, post, Request, get
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import RatingDTO, Rating
+from .models import RatingDTO
 from .services import RatingService
 from ..accounts.models import User
 
 
 class RatingController(Controller):
     path = "/ratings"
+    tags = ["Ratings"]
     service = RatingService()
 
     @post("/")
