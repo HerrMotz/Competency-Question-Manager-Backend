@@ -4,7 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_
 
-from .models import RatingDTO, Rating
+from .models import Rating
+from .dtos import RatingDTO
 
 
 class RatingService:

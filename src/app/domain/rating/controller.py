@@ -4,7 +4,8 @@ from uuid import UUID, uuid4
 from litestar import Controller, post, Request, get
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import RatingDTO, Rating
+from .models import Rating
+from .dtos import RatingDTO
 from .services import RatingService
 from ..accounts.models import User
 

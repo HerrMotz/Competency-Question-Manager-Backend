@@ -5,7 +5,7 @@ from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
-from ..rating.models import RatingDTO
+from ..rating.dtos import RatingDTO
 
 
 class QuestionOverviewDTO(BaseModel):

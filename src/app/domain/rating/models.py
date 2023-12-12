@@ -2,19 +2,11 @@ from typing import Annotated
 from uuid import UUID
 
 from advanced_alchemy.base import UUIDAuditBase
-from lib.dto import BaseModel
 from pydantic import Field
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 IndividualRating = Annotated[int, Field(gt=0, le=5)]
-
-
-class RatingDTO(BaseModel):
-    id: UUID | None = None
-    rating: IndividualRating
-    question_id: UUID
-    user_id: UUID | None = None
 
 
 class Rating(UUIDAuditBase):
