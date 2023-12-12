@@ -1,51 +1,63 @@
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from .dtos import RatingDTO
+from .dtos import RatingGetDTO, RatingSetDTO
 from .models import Rating
 
 
 class RatingService:
-    async def set_rating(self, session: AsyncSession, rating: RatingDTO) -> RatingDTO:
+    async def set_rating(self, session: AsyncSession, rating: RatingSetDTO, user_id: UUID) -> RatingSetDTO:
         """
         Set the rating for a specific model and save it to the database.
 
-        :param rating: RatingDTO
+        :param user_id:
+        :param rating: RatingSetDTO
         :param session: AsyncSession
         :return: The saved rating.
-        :rtype: RatingDTO
+        :rtype: RatingSetDTO
         """
-        if ratingFromDB := await session.scalar(
-            select(Rating).where(Rating.user_id == rating.user_id).where(Rating.question_id == rating.question_id)
+        if rating_from_db := await session.scalar(
+            select(Rating).where(Rating.user_id == user_id).where(Rating.question_id == rating.question_id)
         ):
-            ratingFromDB.rating = ratingFromDB.rating
-            return RatingDTO.model_validate(rating)
+            rating_from_db.rating = rating.rating
+            return RatingSetDTO.model_validate(rating_from_db)
         else:
-            rating = Rating(id=uuid4(), user_id=rating.user_id, question_id=rating.question_id, rating=rating.rating)
-            session.add(rating)
-            return RatingDTO.model_validate(rating)
+            new_rating = Rating(id=uuid4(), rating=rating.rating, user_id=user_id, question_id=rating.question_id)
+            session.add(new_rating)
+            return RatingSetDTO.model_validate(new_rating)
 
-    async def get_ratings(self, session: AsyncSession, question_id: UUID) -> list[RatingDTO]:
+    async def get_ratings(self, session: AsyncSession, question_id: UUID) -> list[RatingGetDTO]:
         """
         Get the list of ratings for a given question ID.
 
+        :param session:
         :param question_id: The unique ID of the question.
         :type question_id: UUID
         :return: The list of ratings for the question.
-        :rtype: list[RatingDTO]
+        :rtype: list[RatingGetDTO]
         """
-        ratings = await session.scalars(select(Rating).where(Rating.question_id == question_id))
-        return [RatingDTO.model_validate(rating) for rating in ratings]
+        ratings = await session.scalars(
+            select(Rating).where(Rating.question_id == question_id).options(selectinload(Rating.user))
+        )
+        return [RatingGetDTO.model_copy(rating, update={"user_name": rating.user.name}) for rating in ratings]
 
-    async def get_rating(self, session: AsyncSession, user_id: UUID, question_id: UUID) -> RatingDTO | None:
-
+    async def get_rating(self, session: AsyncSession, user_id: UUID, question_id: UUID) -> RatingGetDTO | None:
         rating = await session.scalar(
-            select(Rating).where(Rating.user_id == user_id).where(Rating.question_id == question_id)
+            select(Rating)
+            .where(Rating.user_id == user_id)
+            .where(Rating.question_id == question_id)
+            .options(selectinload(Rating.user))
         )
         if rating:
-            return RatingDTO.model_validate(rating)
+            return RatingGetDTO(
+                rating=rating.rating,
+                question_id=rating.question_id,
+                user_id=rating.user_id,
+                user_name=rating.user.name,
+            )
 
         else:
             return None

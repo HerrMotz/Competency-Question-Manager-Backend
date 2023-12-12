@@ -5,7 +5,7 @@ from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..rating.dtos import RatingDTO
+from ..rating.dtos import RatingGetDTO
 
 
 class QuestionOverviewDTO(BaseModel):
@@ -19,7 +19,7 @@ class QuestionOverviewDTO(BaseModel):
 class QuestionDetailDTO(BaseModel):
     id: UUID
     question: str
-    ratings: list[RatingDTO]
+    ratings: list[RatingGetDTO]
     author_name: str
     author_id: UUID
 

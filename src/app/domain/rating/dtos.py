@@ -1,11 +1,16 @@
 from uuid import UUID
 
-from app.domain.rating.models import IndividualRating
-from app.lib.dto import BaseModel
+from lib.dto import BaseModel
+
+from .models import IndividualRating
 
 
-class RatingDTO(BaseModel):
-    id: UUID | None = None
+class RatingSetDTO(BaseModel):
     rating: IndividualRating
     question_id: UUID
-    user_id: UUID | None = None
+
+class RatingGetDTO(BaseModel):
+    rating: IndividualRating
+    question_id: UUID
+    user_id: UUID
+    user_name: str

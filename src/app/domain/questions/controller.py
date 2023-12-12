@@ -10,7 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..accounts.models import User
-from ..rating.models import IndividualRating
+from ..rating.dtos import RatingGetDTO
+from ..rating.models import IndividualRating, Rating
 from ..rating.services import RatingService
 from .models import (
     Question,
@@ -24,18 +25,6 @@ from .models import (
 class QuestionController(Controller):
     path = "/questions/"
     rating_service = RatingService()
-
-    async def aggregate_rating(self, question_id: UUID) -> IndividualRating:
-        """
-        :param question_id: The ID of the question to calculate the aggregate rating for.
-        :return: The aggregate rating of the question.
-        """
-        ratings = await self.rating_service.get_ratings(question_id)
-        if len(ratings) > 0:
-            mean = sum([rating.rating for rating in ratings]) / len(ratings)
-            return math.ceil(mean) if mean % 1 >= 0.5 else int(mean)
-        else:
-            return 0
 
     @post("/", status_code=HTTP_201_CREATED)
     async def create_question(
@@ -83,21 +72,31 @@ class QuestionController(Controller):
         :return: A `QuestionDTO` object containing the retrieved question.
         :raises HTTPException: If the question with the specified ID is not found.
         """
-        q = (await session.execute(
-            select(Question)
-            .where(Question.id == question_id)
-            .options(selectinload(Question.author))
-            .options(selectinload(Question.ratings))
-        )).scalar()
+        q = (
+            await session.execute(
+                select(Question)
+                .where(Question.id == question_id)
+                .options(selectinload(Question.author))
+                .options(selectinload(Question.ratings).options(selectinload(Rating.user)))
+            )
+        ).scalar()
 
         if not q:
             raise HTTPException(status_code=404, detail="Question not found")
         question_dto = QuestionDetailDTO(
             id=q.id,
             question=q.question,
-            ratings=q.ratings,
+            ratings=[
+                RatingGetDTO(
+                    rating=rating.rating,
+                    user_id=rating.user_id,
+                    user_name=rating.user.name,
+                    question_id=rating.question_id,
+                )
+                for rating in q.ratings
+            ],
             author_id=q.author_id,
-            author_name=q.author.name
+            author_name=q.author.name,
         )
         return question_dto
 
