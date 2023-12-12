@@ -25,5 +25,5 @@ class RatingController(Controller):
         )
 
     @get(path="/{question_id:uuid}/user/{user_id:uuid}")
-    async def get_rating(self, session: AsyncSession, user_id: UUID, question_id: UUID) -> list[RatingGetDTO] | None:
+    async def get_rating(self, session: AsyncSession, user_id: UUID, question_id: UUID) -> RatingGetDTO | None:
         return await self.service.get_rating(user_id=user_id, question_id=question_id, session=session)
