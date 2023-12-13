@@ -84,10 +84,8 @@ class QuestionController(Controller):
 
         if not q:
             raise HTTPException(status_code=404, detail="Question not found")
-        question_dto = QuestionDetailDTO(
-            id=q.id,
-            question=q.question,
-            ratings=[
+
+        ratings = [
                 RatingGetDTO(
                     rating=rating.rating,
                     user_id=rating.user_id,
@@ -95,7 +93,12 @@ class QuestionController(Controller):
                     question_id=rating.question_id,
                 )
                 for rating in q.ratings
-            ],
+            ]
+        question_dto = QuestionDetailDTO(
+            id=q.id,
+            question=q.question,
+            ratings=ratings,
+            rating=int(sum([rating.rating for rating in ratings]) / len(ratings)) if len(ratings) > 0 else 0,
             author_id=q.author_id,
             author_name=q.author.name,
         )

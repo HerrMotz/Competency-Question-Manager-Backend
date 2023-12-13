@@ -27,6 +27,7 @@ class QuestionDetailDTO(BaseModel):
     id: UUID
     question: str
     ratings: list[RatingGetDTO]
+    rating: int
     author_name: str
     author_id: UUID
 
