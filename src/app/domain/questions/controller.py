@@ -73,27 +73,27 @@ class QuestionController(Controller):
         :return: A `QuestionDTO` object containing the retrieved question.
         :raises HTTPException: If the question with the specified ID is not found.
         """
-        q = (
-            await session.execute(
-                select(Question)
-                .where(Question.id == question_id)
-                .options(selectinload(Question.author))
-                .options(selectinload(Question.ratings).options(selectinload(Rating.user)))
-            )
-        ).scalar()
+
+        q = await session.scalar(
+            select(Question)
+            .where(Question.id == question_id)
+            .options(selectinload(Question.author))
+            .options(selectinload(Question.ratings).options(selectinload(Rating.user)))
+
+        )
 
         if not q:
             raise HTTPException(status_code=404, detail="Question not found")
 
         ratings = [
-                RatingGetDTO(
-                    rating=rating.rating,
-                    user_id=rating.user_id,
-                    user_name=rating.user.name,
-                    question_id=rating.question_id,
-                )
-                for rating in q.ratings
-            ]
+            RatingGetDTO(
+                rating=rating.rating,
+                user_id=rating.user_id,
+                user_name=rating.user.name,
+                question_id=rating.question_id,
+            )
+            for rating in q.ratings
+        ]
         question_dto = QuestionDetailDTO(
             id=q.id,
             question=q.question,
@@ -115,8 +115,11 @@ class QuestionController(Controller):
 
         :raises HTTPException: If the question with the specified ID is not found.
         """
-        question = await session.execute(select(Question).where(Question.id == question_id))
-        if not question.scalar():
+
+        question = await session.scalar(select(Question).where(Question.id == question_id))
+
+        if not question:
             raise HTTPException(status_code=404, detail="Question not found")
-        await session.delete(question.scalar())
-        await session.commit()
+
+        await session.delete(question)
+        return
