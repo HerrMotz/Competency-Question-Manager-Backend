@@ -13,6 +13,7 @@ from ..rating.dtos import RatingGetDTO
 if TYPE_CHECKING:
     from domain.accounts.models import User
     from domain.rating.models import Rating
+    from domain.consolidations.models import Consolidation
 
 
 class QuestionOverviewDTO(BaseModel):
@@ -55,6 +56,7 @@ class QuestionUpdatedDTO(BaseModel):
 class Question(UUIDAuditBase):
     question: Mapped[str]
     author_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
-    
+
     author: Mapped[User] = relationship(back_populates="questions")
     ratings: Mapped[list[Rating]] = relationship(back_populates="question", cascade="all, delete-orphan")
+    consolidations: Mapped[list[Consolidation]] = relationship(secondary="consolidated_questions", back_populates="questions")
