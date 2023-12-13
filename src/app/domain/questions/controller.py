@@ -57,7 +57,7 @@ class QuestionController(Controller):
                 question=q.question,
                 author_id=q.author_id,
                 author_name=q.author.name,
-                rating=sum([rating.rating for rating in q.ratings]) / len(q.ratings) if len(q.ratings) > 0 else 0,
+                rating=int(sum([rating.rating for rating in q.ratings]) / len(q.ratings)) if len(q.ratings) > 0 else 0,
             )
             for q in questions.all()
         ]
