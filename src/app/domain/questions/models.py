@@ -57,4 +57,4 @@ class Question(UUIDAuditBase):
     author_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
     
     author: Mapped[User] = relationship(back_populates="questions")
-    ratings: Mapped[list[Rating]] = relationship(back_populates="question")
+    ratings: Mapped[list[Rating]] = relationship(back_populates="question", cascade="all, delete-orphan")
