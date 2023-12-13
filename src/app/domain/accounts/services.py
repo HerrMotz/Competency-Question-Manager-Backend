@@ -1,7 +1,8 @@
-from typing import Iterable
+import random
+import string
+from typing import Iterable, NamedTuple
 from uuid import UUID, uuid4
 
-from litestar.background_tasks import BackgroundTask
 from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +12,8 @@ from .authentication.services import EncryptionService, PasswordHash
 from .dtos import UserGetDTO, UserLoginDTO, UserRegisterDTO, UserUpdateDTO
 from .exceptions import DelegateHTTPException, EmailInUseException, NameInUseException
 from .models import User
+
+InvitedUsers = NamedTuple("InvitedUsers", [("existing", Iterable[User]), ("created", Iterable[User])])
 
 
 class UserService:
@@ -160,18 +163,44 @@ class UserService:
         return None
 
     @staticmethod
-    async def get_system_users(
-        session: AsyncSession, emails: Iterable[EmailStr]
-    ) -> tuple[Iterable[User], BackgroundTask | None]:
+    def create_temporary_user(encryption: EncryptionService, email: EmailStr) -> User:
+        # TODO: remove this once we are sure names are dropped otherwise enhance this with
+        #       better collision detection/prevention, adding 2 digits does not do it
+        name_ = [*email.split("@")[0], *random.sample(string.digits, 2)]
+        name = "".join(name_)
+        sequence = [
+            *random.sample(string.ascii_lowercase, 4),
+            *random.sample(string.ascii_uppercase, 4),
+            *random.sample(string.digits, 4),
+        ]
+        random.shuffle(sequence)
+        password = "".join(sequence)
+        password_hash = UserService._encrypt_password(encryption, password)
+        return User(
+            email=email,
+            name=name,
+            password_hash=password_hash.hash,
+            password_salt=password_hash.salt,
+            is_system_admin=False,
+            is_verified=False,
+        )
+
+    @staticmethod
+    async def get_or_create_users(
+        session: AsyncSession,
+        encryption: EncryptionService,
+        emails: Iterable[EmailStr],
+    ) -> InvitedUsers:
         mails = set(emails)
+        existing_users = await session.scalars(select(User).where(User.email.in_(mails)))
+        existing_users = existing_users.all()
 
-        users = await session.scalars(select(User).where(User.email.in_(mails)))
-        non_users = mails - set(map(lambda user: user.email, users))
-        invite_task = BackgroundTask(lambda: map(lambda email: ..., non_users)) if non_users else None
+        mails -= set(map(lambda user: user.email, existing_users))
+        invited_users = [*map(lambda mail: UserService.create_temporary_user(encryption, mail), mails)]
+        session.add_all(invited_users)
+        await session.commit()
+        _ = [await session.refresh(user) for user in invited_users]
 
-        # TODO: handle non registered users, dummy user -> send invite mail
+        # TODO: send invitation mail to all just created users
 
-        return users, invite_task
-
-
-MOCK_USER_SERVICE = UserService()
+        return InvitedUsers(existing_users, invited_users)
