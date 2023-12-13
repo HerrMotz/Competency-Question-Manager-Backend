@@ -42,8 +42,8 @@ class ProjectCreateDTO(BaseModel):
     managers: list[EmailStr] | None = None
 
 
-ProjectManagersAddDTO = list[EmailStr]
-ProjectManagersRemoveDTO = list[UUID]
+ProjectUsersAddDTO = list[EmailStr]
+ProjectUsersRemoveDTO = list[UUID]
 
 
 class ProjectUpdateDTO(BaseModel):

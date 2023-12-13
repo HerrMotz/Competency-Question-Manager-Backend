@@ -20,6 +20,7 @@ class User(UUIDAuditBase):
     is_verified: Mapped[bool]
 
     managed_projects: Mapped[list[Project]] = relationship(secondary="project_managers", back_populates="managers")
+    engineered_projects: Mapped[list[Project]] = relationship(secondary="project_engineers", back_populates="engineers")
     joined_groups: Mapped[list[Group]] = relationship(secondary="group_members", back_populates="members")
 
     # TODO: add relationships

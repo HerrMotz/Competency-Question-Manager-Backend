@@ -20,16 +20,29 @@ ProjectManagers = Table(
 )
 
 
+ProjectEngineers = Table(
+    "project_engineers",
+    UUIDAuditBase.metadata,
+    Column[UUID]("user_id", ForeignKey("user.id"), primary_key=True),
+    Column[UUID]("project_id", ForeignKey("project.id"), primary_key=True),
+)
+
+
 class Project(UUIDAuditBase):
     name: Mapped[str] = mapped_column()
     description: Mapped[str] = mapped_column()
 
-    groups: Mapped[list[Group]] = relationship(back_populates="project")
     managers: Mapped[list[User]] = relationship(secondary="project_managers", back_populates="managed_projects")
+    engineers: Mapped[list[User]] = relationship(secondary="project_engineers", back_populates="engineered_projects")
+    groups: Mapped[list[Group]] = relationship(back_populates="project")
 
     @hybrid_property
     def no_managers(self) -> int:
         return len(self.managers)
+
+    @hybrid_property
+    def no_engineers(self) -> int:
+        return len(self.engineers)
 
     @hybrid_property
     def no_groups(self) -> int:
