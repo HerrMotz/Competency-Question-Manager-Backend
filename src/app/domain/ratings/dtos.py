@@ -12,5 +12,5 @@ class RatingSetDTO(BaseModel):
 class RatingGetDTO(BaseModel):
     rating: IndividualRating
     question_id: UUID
-    user_id: UUID
-    user_name: str
+    author_id: UUID
+    author_name: str

@@ -79,7 +79,7 @@ class QuestionController(Controller):
             select(Question)
             .where(Question.id == question_id)
             .options(selectinload(Question.author))
-            .options(selectinload(Question.ratings).options(selectinload(Rating.user)))
+            .options(selectinload(Question.ratings).options(selectinload(Rating.author)))
             .options(selectinload(Question.comments).options(selectinload(Comment.author)))
 
         )

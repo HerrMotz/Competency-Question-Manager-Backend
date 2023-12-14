@@ -23,7 +23,7 @@ class User(UUIDAuditBase):
     is_verified: Mapped[bool]
 
     questions: Mapped[list[Question]] = relationship(back_populates="author")
-    ratings: Mapped[list[Rating]] = relationship(back_populates="user")
+    ratings: Mapped[list[Rating]] = relationship(back_populates="author")
     comments: Mapped[list[Comment]] = relationship(back_populates="author")
 
     # TODO: add relationships
