@@ -11,12 +11,12 @@ from .models import Rating
 class RatingService:
     async def set_rating(self, session: AsyncSession, rating: RatingSetDTO, user_id: UUID) -> RatingSetDTO:
         """
-        Set the rating for a specific model and save it to the database.
+        Set the ratings for a specific model and save it to the database.
 
         :param user_id:
         :param rating: RatingSetDTO
         :param session: AsyncSession
-        :return: The saved rating.
+        :return: The saved ratings.
         :rtype: RatingSetDTO
         """
         if rating_from_db := await session.scalar(
