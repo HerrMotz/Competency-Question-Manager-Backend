@@ -11,30 +11,22 @@ from .models import Consolidation
 class ConsolidationDTO(SQLAlchemyDTO[Consolidation]):
     config = SQLAlchemyDTOConfig(
         rename_strategy="camel",
-        exclude={
-            "engineer.password_hash",
-            "engineer.password_salt",
-            "engineer.is_system_admin",
-            "engineer.is_verified",
-            "engineer.consolidations",
-            "engineer.questions",
-            "engineer.ratings",
-            "question.ratings",
-            "question.consolidations",
-            "question.author_id",
-            "question.author.password_hash",
-            "question.author.password_salt",
-            "question.author.is_system_admin",
-            "question.author.is_verified",
-            "question.author.consolidations",
-            "question.author.questions",
-            "question.author.ratings",
+        include={
+            "engineer.id",
+            "engineer.name",
+            "engineer.email",
+            "questions.0.id",
+            "questions.0.question",
+            "questions.0.author_id",
+            "questions.0.author.id",
+            "questions.0.author.name",
+            "questions.0.author.email",
         },
     )
 
 
 class ConsolidationCreate(BaseModel):
-    question: str
+    name: str
     ids: list[UUID] | None = None
 
 
@@ -43,7 +35,7 @@ class ConsolidationCreateDTO(PydanticDTO[ConsolidationCreate]):
 
 
 class ConsolidationUpdate(BaseModel):
-    question: str | None
+    name: str | None
 
 
 class ConsolidationUpdateDTO(PydanticDTO[ConsolidationUpdate]):
