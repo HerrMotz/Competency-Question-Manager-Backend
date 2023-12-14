@@ -12,6 +12,8 @@ class ConsolidationDTO(SQLAlchemyDTO[Consolidation]):
     config = SQLAlchemyDTOConfig(
         rename_strategy="camel",
         include={
+            "id",
+            "name",
             "engineer.id",
             "engineer.name",
             "engineer.email",

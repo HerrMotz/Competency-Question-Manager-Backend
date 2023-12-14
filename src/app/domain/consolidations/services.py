@@ -7,7 +7,7 @@ from litestar.status_codes import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
-
+from sqlalchemy.exc import IntegrityError
 from .dtos import ConsolidationCreate, ConsolidationUpdate, MoveQuestion
 from .models import Consolidation
 
@@ -44,14 +44,18 @@ class ConsolidationService:
         data: ConsolidationCreate,
         options: Iterable[ExecutableOption] | None = None,
     ) -> Consolidation:
-        questions: list[Question] = []
+        questions: Sequence[Question] = []
         if data.ids:
             questions_ = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
-            questions.extend(questions_.all())
+            questions = questions_.all()
 
-        consolidation = Consolidation(name=data.name, questions=questions, engineer_id=user_id)
-        session.add(consolidation)
-        await session.commit()
+        try:
+            consolidation = Consolidation(name=data.name, questions=questions, engineer_id=user_id)
+            session.add(consolidation)
+            await session.commit()
+        except IntegrityError as error:
+            raise HTTPException(status_code=HTTP_400_BAD_REQUEST) from error
+
         await session.refresh(consolidation)
         return await ConsolidationService.get_consolidation(session, consolidation.id, options)
 
@@ -71,6 +75,10 @@ class ConsolidationService:
         if data.name:
             consolidation = await ConsolidationService.get_consolidation(session, id, options)
             consolidation.name = data.name
+            try:
+                await session.commit()
+            except IntegrityError as error:
+                raise HTTPException(status_code=HTTP_400_BAD_REQUEST) from error
             return consolidation
         raise HTTPException(status_code=HTTP_404_NOT_FOUND)
 
