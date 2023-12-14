@@ -1,5 +1,4 @@
 from typing import Any
-from typing import Any
 from uuid import UUID, uuid4
 
 from litestar import Controller, Request, delete, get, post
