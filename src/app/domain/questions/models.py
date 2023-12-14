@@ -8,11 +8,12 @@ from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..rating.dtos import RatingGetDTO
+from ..ratings.dtos import RatingGetDTO
 
 if TYPE_CHECKING:
-    from domain.accounts.models import User
-    from domain.rating.models import Rating
+    from ..accounts.models import User
+    from ..ratings.models import Rating
+    from ..comments.models import Comment
 
 
 class QuestionOverviewDTO(BaseModel):
@@ -55,6 +56,7 @@ class QuestionUpdatedDTO(BaseModel):
 class Question(UUIDAuditBase):
     question: Mapped[str]
     author_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
-    
+
     author: Mapped[User] = relationship(back_populates="questions")
     ratings: Mapped[list[Rating]] = relationship(back_populates="question", cascade="all, delete-orphan")
+    comments: Mapped[list[Comment]] = relationship(back_populates="question", cascade="all, delete-orphan")

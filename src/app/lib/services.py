@@ -6,7 +6,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase
 
 from .orm import session as session_maker
-from domain.rating.models import Rating
+from domain.ratings.models import Rating
+from domain.comments.models import Comment
 
 
 class MockDataService:
@@ -62,20 +63,29 @@ class MockDataService:
     mock_questions = [
         Question(
             question="How is it?",
-            id = UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
-            author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"), ),
+            id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+            author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
+        ),
     ]
 
     mock_ratings = [
         Rating(
             rating=4,
             user_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
-            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952")
+            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
         ),
         Rating(
             rating=3,
             user_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
-            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952")
+            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+        ),
+    ]
+
+    mock_comments = [
+        Comment(
+            comment="Das ist eine sehr gute Frage",
+            author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
+            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
         )
     ]
 

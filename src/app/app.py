@@ -3,7 +3,7 @@ import os
 from domain.accounts.authentication.middleware import AuthenticationMiddleware
 from domain.accounts.controllers import UserController
 from domain.questions.controller import QuestionController
-from domain.rating.controller import RatingController
+from domain.ratings.controller import RatingController
 from lib.orm import AsyncSqlPlugin
 from lib.services import MockDataService
 from litestar import Litestar

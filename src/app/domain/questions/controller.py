@@ -1,4 +1,4 @@
-import math
+from typing import Any
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -9,10 +9,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..accounts.models import User
-from ..rating.dtos import RatingGetDTO
-from ..rating.models import IndividualRating, Rating
-from ..rating.services import RatingService
 from .models import (
     Question,
     QuestionCreatedDTO,
@@ -20,6 +16,11 @@ from .models import (
     QuestionDetailDTO,
     QuestionOverviewDTO,
 )
+from ..accounts.models import User
+from ..comments.models import Comment
+from ..ratings.dtos import RatingGetDTO
+from ..ratings.models import Rating
+from ..ratings.services import RatingService
 
 
 class QuestionController(Controller):
@@ -79,6 +80,7 @@ class QuestionController(Controller):
             .where(Question.id == question_id)
             .options(selectinload(Question.author))
             .options(selectinload(Question.ratings).options(selectinload(Rating.user)))
+            .options(selectinload(Question.comments).options(selectinload(Comment.author)))
 
         )
 

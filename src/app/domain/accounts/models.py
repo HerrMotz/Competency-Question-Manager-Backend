@@ -6,9 +6,12 @@ from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+
+
 if TYPE_CHECKING:
     from domain.questions.models import Question
-    from domain.rating.models import Rating
+    from domain.ratings.models import Rating
+    from domain.comments.models import Comment
 
 
 class User(UUIDAuditBase):
@@ -21,6 +24,7 @@ class User(UUIDAuditBase):
 
     questions: Mapped[list[Question]] = relationship(back_populates="author")
     ratings: Mapped[list[Rating]] = relationship(back_populates="user")
+    comments: Mapped[list[Comment]] = relationship(back_populates="author")
 
     # TODO: add relationships
     # projects: Mapped[list["Project"]] = relationship(back_populates="members")

@@ -5,7 +5,7 @@ from uuid import UUID
 
 from advanced_alchemy.base import UUIDAuditBase
 from pydantic import Field
-from sqlalchemy import ForeignKey, PrimaryKeyConstraint
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
