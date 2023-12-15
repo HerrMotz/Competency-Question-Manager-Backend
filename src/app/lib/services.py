@@ -89,7 +89,7 @@ class MockDataService:
         )
     ]
 
-    mock_data: list[DeclarativeBase] = [*mock_users, *mock_questions, *mock_ratings]
+    mock_data: list[DeclarativeBase] = [*mock_users, *mock_questions, *mock_ratings, *mock_comments]
 
     async def _add_mock_model(self, model: DeclarativeBase) -> None:
         async with session_maker() as session:
