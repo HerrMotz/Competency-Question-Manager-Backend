@@ -36,10 +36,12 @@ class ConsolidationController(Controller):
 
     @get("/", return_dto=ConsolidationDTO)
     async def get_consolidations_handler(self, session: AsyncSession) -> Sequence[Consolidation]:
+        """Gets a single `Consolidation`."""
         return await ConsolidationService.get_consolidations(session, self.default_options)
 
     @get("/{consolidation_id:uuid}", return_dto=ConsolidationDTO)
     async def get_consolidation_handler(self, session: AsyncSession, consolidation_id: UUID) -> Consolidation:
+        """Gets a all `Consolidations`."""
         return await ConsolidationService.get_consolidation(session, consolidation_id, self.default_options)
 
     @post("/", dto=ConsolidationCreateDTO, return_dto=ConsolidationDTO)
@@ -49,6 +51,7 @@ class ConsolidationController(Controller):
         session: AsyncSession,
         data: JsonEncoded[ConsolidationCreate],
     ) -> Consolidation:
+        """Creates a new `Consolidation`."""
         return await ConsolidationService.create_consolidation(session, request.user.id, data, self.default_options)
 
     @put("/{consolidation_id:uuid}", dto=ConsolidationUpdateDTO, return_dto=ConsolidationDTO)
@@ -58,10 +61,12 @@ class ConsolidationController(Controller):
         consolidation_id: UUID,
         data: JsonEncoded[ConsolidationUpdate],
     ) -> Consolidation:
+        """Updates an existing `Consolidation`."""
         return await ConsolidationService.update_consolidation(session, consolidation_id, data, self.default_options)
 
     @delete("/{consolidation_id:uuid}")
     async def delete_consolidation_handler(self, session: AsyncSession, consolidation_id: UUID) -> None:
+        """Deletes an existing `Consolidation`."""
         await ConsolidationService.delete_consolidation(session, consolidation_id)
 
     @put("/{consolidation_id:uuid}/questions/add", dto=MoveQuestionDTO, return_dto=ConsolidationDTO)
@@ -71,6 +76,7 @@ class ConsolidationController(Controller):
         consolidation_id: UUID,
         data: JsonEncoded[MoveQuestion],
     ) -> Consolidation:
+        """Add `Questions` to an existing `Consolidation`."""
         return await ConsolidationService.add_questions(session, consolidation_id, data, self.default_options)
 
     @put("/{consolidation_id:uuid}/questions/remove", dto=MoveQuestionDTO, return_dto=ConsolidationDTO)
@@ -80,4 +86,5 @@ class ConsolidationController(Controller):
         consolidation_id: UUID,
         data: JsonEncoded[MoveQuestion],
     ) -> Consolidation:
+        """Removes `Questions` from an existing `Consolidation`."""
         return await ConsolidationService.remove_questions(session, consolidation_id, data, self.default_options)
