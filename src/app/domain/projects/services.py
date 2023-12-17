@@ -41,7 +41,12 @@ class ProjectService:
         return (await session.scalars(statement)).all()
 
     @staticmethod
-    async def create(session: AsyncSession, encryption: EncryptionService, data: ProjectCreateDTO) -> Project:
+    async def create(
+        session: AsyncSession,
+        encryption: EncryptionService,
+        data: ProjectCreateDTO,
+        options: Iterable[ExecutableOption] | None = None,
+    ) -> Project:
         managers: list[User] = []
         if data.managers:
             managers_ = await UserService.get_or_create_users(session, encryption, data.managers)
@@ -58,7 +63,7 @@ class ProjectService:
         session.add(project)
         await session.commit()
         await session.refresh(project)
-        return project
+        return await ProjectService.get_project(session, project.id, options)
 
     @staticmethod
     async def add_managers(
@@ -66,21 +71,27 @@ class ProjectService:
         encryption: EncryptionService,
         id: UUID,
         data: ProjectUsersAddDTO,
+        options: Iterable[ExecutableOption] | None = None,
     ) -> Project:
         if not data.emails:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)  # TODO: raise explicit exception
 
-        managers = await UserService.get_or_create_users(session, encryption, data.emails)
         project = await ProjectService.get_project(session, id, [selectinload(Project.managers)])
+        managers = await UserService.get_or_create_users(session, encryption, data.emails)
         project.managers.extend([*managers.existing, *managers.created])
         # TODO: send invitation mail to all managers
 
         await session.commit()
         await session.refresh(project)
-        return project
+        return await ProjectService.get_project(session, project.id, options)
 
     @staticmethod
-    async def remove_managers(session: AsyncSession, id: UUID, data: ProjectUsersRemoveDTO) -> Project:
+    async def remove_managers(
+        session: AsyncSession,
+        id: UUID,
+        data: ProjectUsersRemoveDTO,
+        options: Iterable[ExecutableOption] | None = None,
+    ) -> Project:
         if not data.ids:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)  # TODO: raise explicit exception
 
@@ -90,7 +101,9 @@ class ProjectService:
         ex_managers = filter(lambda user: user.id in ids, project.managers)
         _ = [project.managers.remove(user) for user in ex_managers]
 
-        return project
+        await session.commit()
+        await session.refresh(project)
+        return await ProjectService.get_project(session, project.id, options)
 
     @staticmethod
     async def add_engineers(
@@ -98,6 +111,7 @@ class ProjectService:
         encryption: EncryptionService,
         id: UUID,
         data: ProjectUsersAddDTO,
+        options: Iterable[ExecutableOption] | None = None,
     ) -> Project:
         if not data.emails:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)  # TODO: raise explicit exception
@@ -109,10 +123,15 @@ class ProjectService:
 
         await session.commit()
         await session.refresh(project)
-        return project
+        return await ProjectService.get_project(session, project.id, options)
 
     @staticmethod
-    async def remove_engineers(session: AsyncSession, id: UUID, data: ProjectUsersRemoveDTO) -> Project:
+    async def remove_engineers(
+        session: AsyncSession,
+        id: UUID,
+        data: ProjectUsersRemoveDTO,
+        options: Iterable[ExecutableOption] | None = None,
+    ) -> Project:
         if not data.ids:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)  # TODO: raise explicit exception
 
@@ -122,17 +141,24 @@ class ProjectService:
         ex_engineers = filter(lambda user: user.id in ids, project.engineers)
         _ = [project.engineers.remove(user) for user in ex_engineers]
 
-        return project
+        await session.commit()
+        await session.refresh(project)
+        return await ProjectService.get_project(session, project.id, options)
 
     @staticmethod
-    async def update(session: AsyncSession, id: UUID, data: ProjectUpdateDTO) -> Project:
+    async def update(
+        session: AsyncSession,
+        id: UUID,
+        data: ProjectUpdateDTO,
+        options: Iterable[ExecutableOption] | None = None,
+    ) -> Project:
         project = await ProjectService.get_project(session, id)
         project.name = data.name if data.name else project.name
         project.description = data.description if data.description else project.description
 
         await session.commit()
         await session.refresh(project)
-        return project
+        return await ProjectService.get_project(session, project.id, options)
 
     @staticmethod
     async def delete(session: AsyncSession, id: UUID) -> bool:
