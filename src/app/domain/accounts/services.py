@@ -166,8 +166,7 @@ class UserService:
     def create_temporary_user(encryption: EncryptionService, email: EmailStr) -> User:
         # TODO: remove this once we are sure names are dropped otherwise enhance this with
         #       better collision detection/prevention, adding 2 digits does not do it
-        name_ = [*email.split("@")[0], *random.sample(string.digits, 2)]
-        name = "".join(name_)
+        name = uuid4().hex
         sequence = [
             *random.sample(string.ascii_lowercase, 4),
             *random.sample(string.ascii_uppercase, 4),

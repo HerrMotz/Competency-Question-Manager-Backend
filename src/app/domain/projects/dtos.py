@@ -9,42 +9,45 @@ from .models import Project
 
 class ProjectDTO(SQLAlchemyDTO[Project]):
     config = SQLAlchemyDTOConfig(
-        exclude={
-            "updated_at",
-            "managers",
-            "engineers",
-            "groups",
+        include={
+            "id",
+            "name",
+            "description",
+            "no_managers",
+            "no_engineers",
+            "no_groups",
+            "total_members",
         },
     )
 
 
 class ProjectDetailDTO(SQLAlchemyDTO[Project]):
     config = SQLAlchemyDTOConfig(
-        exclude={
-            # TODO: refactor dto creation, annotate user model
+        max_nested_depth=2,
+        include={
+            "id",
+            "name",
+            "description",
+            "no_managers",
+            "no_engineers",
+            "no_groups",
+            "total_members",
+            "created_at",
             "updated_at",
-            "managers.0.created_at",
-            "managers.0.updated_at",
-            "managers.0.is_system_admin",
-            "managers.0.is_verified",
-            "managers.0.password_hash",
-            "managers.0.password_salt",
-            "managers.0.managed_projects",
-            "managers.0.engineered_projects",
-            "managers.0.joined_groups",
-            "engineers.0.created_at",
-            "engineers.0.updated_at",
-            "engineers.0.is_system_admin",
-            "engineers.0.is_verified",
-            "engineers.0.password_hash",
-            "engineers.0.password_salt",
-            "engineers.0.managed_projects",
-            "engineers.0.engineered_projects",
-            "engineers.0.joined_groups",
-            "groups.0.project_id",
-            "groups.0.project",
-            "groups.0.members",
+            "managers.0.id",
+            "managers.0.name",
+            "managers.0.email",
+            "engineers.0.id",
+            "engineers.0.name",
+            "engineers.0.email",
+            "groups.0.id",
+            "groups.0.name",
+            "groups.0.no_members",
+            "groups.0.created_at",
             "groups.0.updated_at",
+            "groups.0.members.0.id",
+            "groups.0.members.0.name",
+            "groups.0.members.0.email",
         },
     )
 
