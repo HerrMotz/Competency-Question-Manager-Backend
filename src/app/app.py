@@ -9,6 +9,7 @@ from domain.accounts.controllers import UserController
 from domain.accounts.authentication.middleware import AuthenticationMiddleware
 from domain.accounts.authentication.services import EncryptionService
 from domain.projects.controllers import ProjectController
+from domain.groups.controllers import GroupController
 from lib.orm import AsyncSqlPlugin
 from lib.services import MockDataService
 
@@ -22,7 +23,7 @@ encryption = EncryptionService()
 mock_data = MockDataService()
 
 app = Litestar(
-    route_handlers=[QuestionController, UserController, RatingController, ProjectController],
+    route_handlers=[QuestionController, UserController, RatingController, ProjectController, GroupController],
     cors_config=cors_config,
     openapi_config=openapi_config,
     plugins=[sql_plugin.plugin],
