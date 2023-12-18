@@ -83,10 +83,21 @@ class MockDataService:
 
     mock_comments = [
         Comment(
-            comment="Das ist eine sehr gute Frage",
+            comment="Das ist eine sehr gute Frage!",
             author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
             question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
-        )
+        ),
+        Comment(
+            comment="Ja wirklich gut!",
+            author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
+            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+        ),
+        Comment(
+            comment="Und auch ein sehr spannender Kommentar!",
+            author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
+            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+        ),
+
     ]
 
     mock_data: list[DeclarativeBase] = [*mock_users, *mock_questions, *mock_ratings, *mock_comments]

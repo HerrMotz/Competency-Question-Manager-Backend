@@ -16,6 +16,7 @@ from .models import (
     QuestionOverviewDTO,
 )
 from ..accounts.models import User
+from ..comments.dtos import CommentGet, CommentGetDTO, CommentDTO
 from ..comments.models import Comment
 from ..ratings.dtos import RatingGetDTO
 from ..ratings.models import Rating
@@ -80,7 +81,6 @@ class QuestionController(Controller):
             .options(selectinload(Question.author))
             .options(selectinload(Question.ratings).options(selectinload(Rating.author)))
             .options(selectinload(Question.comments).options(selectinload(Comment.author)))
-
         )
 
         if not q:
@@ -89,11 +89,21 @@ class QuestionController(Controller):
         ratings = [
             RatingGetDTO(
                 rating=rating.rating,
-                user_id=rating.user_id,
-                user_name=rating.user.name,
+                author_id=rating.author.id,
+                author_name=rating.author.name,
                 question_id=rating.question_id,
             )
             for rating in q.ratings
+        ]
+
+        comments = [
+            CommentGet(
+                comment=comment.comment,
+                question_id=comment.question_id,
+                author_id=comment.author_id,
+                author_name=comment.author.name,
+            )
+            for comment in q.comments
         ]
         question_dto = QuestionDetailDTO(
             id=q.id,
@@ -102,6 +112,7 @@ class QuestionController(Controller):
             rating=int(sum([rating.rating for rating in ratings]) / len(ratings)) if len(ratings) > 0 else 0,
             author_id=q.author_id,
             author_name=q.author.name,
+            comments=comments,
         )
         return question_dto
 

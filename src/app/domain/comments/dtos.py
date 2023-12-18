@@ -12,16 +12,24 @@ from .models import Comment
 class CommentDTO(SQLAlchemyDTO[Comment]):
     config = SQLAlchemyDTOConfig(
         rename_strategy="camel",
-        include={
-            "comment",
-            "author_id",
-            "question_id",
-        },
+        include={"id", "comment", "author_id", "question_id", "author.name", "created_at"},
     )
+
+
+class CommentCreate(BaseModel):
+    comment: str
+    question_id: UUID
+
+
+class CommentCreateDTO(PydanticDTO[CommentCreate]):
+    config = DTOConfig(rename_strategy="camel")
 
 
 class CommentGet(BaseModel):
     comment: str
+    author_id: UUID
+    question_id: UUID
+    author_name: str
 
 
 class CommentGetDTO(PydanticDTO[CommentGet]):

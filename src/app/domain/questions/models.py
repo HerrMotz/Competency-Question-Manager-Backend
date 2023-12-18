@@ -8,6 +8,7 @@ from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from ..comments.dtos import CommentGet
 from ..ratings.dtos import RatingGetDTO
 
 if TYPE_CHECKING:
@@ -31,6 +32,7 @@ class QuestionDetailDTO(BaseModel):
     rating: int
     author_name: str
     author_id: UUID
+    comments: list[CommentGet]
 
 
 class QuestionCreateDTO(BaseModel):
