@@ -14,6 +14,8 @@ from .models import (
     QuestionCreateDTO,
     QuestionDetailDTO,
     QuestionOverviewDTO,
+    CommentQuestionDTO,
+    CommentAuthorDTO,
 )
 from ..accounts.models import User
 from ..comments.dtos import CommentGet, CommentGetDTO, CommentDTO
@@ -97,11 +99,12 @@ class QuestionController(Controller):
         ]
 
         comments = [
-            CommentGet(
+            CommentQuestionDTO(
                 comment=comment.comment,
-                question_id=comment.question_id,
-                author_id=comment.author_id,
-                author_name=comment.author.name,
+                questionId=comment.question_id,
+                authorId=comment.author_id,
+                author=CommentAuthorDTO(name=comment.author.name),
+                createdAt=comment.created_at.timestamp(),
             )
             for comment in q.comments
         ]

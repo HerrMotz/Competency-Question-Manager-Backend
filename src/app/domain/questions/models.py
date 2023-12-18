@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -32,7 +33,18 @@ class QuestionDetailDTO(BaseModel):
     rating: int
     author_name: str
     author_id: UUID
-    comments: list[CommentGet]
+    comments: list[CommentQuestionDTO]
+
+# Only until Question refactored as PydanticDTO / SQLAlchemyDTO
+class CommentQuestionDTO(BaseModel):
+    comment: str
+    authorId: UUID
+    questionId: UUID
+    author: CommentAuthorDTO
+    createdAt: datetime
+
+class CommentAuthorDTO(BaseModel):
+    name: str
 
 
 class QuestionCreateDTO(BaseModel):
