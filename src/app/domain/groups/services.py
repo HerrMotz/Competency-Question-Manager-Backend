@@ -115,3 +115,12 @@ class GroupService:
     async def delete(session: AsyncSession, id: UUID) -> bool:
         result = await session.execute(delete(Group).where(Group.id == id))
         return True if result.rowcount > 0 else False
+
+    @staticmethod
+    async def is_member(session: AsyncSession, id: UUID, user_id: UUID) -> bool:
+        """Checks wether a given `User` is a member of the given `Group`."""
+        statement = select(Group).where(Group.id == id)
+        statement = statement.join(User, Group.members)
+        statement = statement.filter(User.id == user_id)
+
+        return True if await session.scalar(statement) else False

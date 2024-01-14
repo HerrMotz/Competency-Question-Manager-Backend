@@ -4,6 +4,7 @@ from uuid import UUID
 from domain.accounts.authentication.services import EncryptionService
 from domain.accounts.models import User
 from domain.accounts.services import UserService
+from domain.groups.models import Group
 from litestar.exceptions import HTTPException
 from litestar.status_codes import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from sqlalchemy import delete, select
@@ -164,3 +165,31 @@ class ProjectService:
     async def delete(session: AsyncSession, id: UUID) -> bool:
         result = await session.execute(delete(Project).where(Project.id == id))
         return True if result.rowcount > 0 else False
+
+    @staticmethod
+    async def is_manager(session: AsyncSession, id: UUID, user_id: UUID) -> bool:
+        """Checks wether a given `User` is a manager of the given `Project`."""
+        statement = select(Project).where(Project.id == id)
+        statement = statement.join(User, Project.managers)
+        statement = statement.filter(User.id == user_id)
+
+        return True if await session.scalar(statement) else False
+
+    @staticmethod
+    async def is_engineer(session: AsyncSession, id: UUID, user_id: UUID) -> bool:
+        """Checks wether a given `User` is an engineer of the given `Project`."""
+        statement = select(Project).where(Project.id == id)
+        statement = statement.join(User, Project.engineers)
+        statement = statement.filter(User.id == user_id)
+
+        return True if await session.scalar(statement) else False
+
+    @staticmethod
+    async def is_member(session: AsyncSession, id: UUID, user_id: UUID) -> bool:
+        """Checks wether a given `User` is a member of the given `Project`."""
+        statement = select(Project).where(Project.id == id)
+        statement = statement.join(Group, Project.groups)
+        statement = statement.join(User, Group.members)
+        statement = statement.filter(User.id == user_id)
+
+        return True if await session.scalar(statement) else False
