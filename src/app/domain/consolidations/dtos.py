@@ -11,6 +11,7 @@ from .models import Consolidation
 class ConsolidationDTO(SQLAlchemyDTO[Consolidation]):
     config = SQLAlchemyDTOConfig(
         rename_strategy="camel",
+        max_nested_depth=2,
         include={
             "id",
             "name",
@@ -19,6 +20,7 @@ class ConsolidationDTO(SQLAlchemyDTO[Consolidation]):
             "engineer.email",
             "questions.0.id",
             "questions.0.question",
+            "questions.0.aggregated_rating",
             "questions.0.author_id",
             "questions.0.author.id",
             "questions.0.author.name",

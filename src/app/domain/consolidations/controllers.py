@@ -31,7 +31,7 @@ class ConsolidationController(Controller):
 
     default_options = [
         selectinload(Consolidation.engineer),
-        selectinload(Consolidation.questions).options(selectinload(Question.author)),
+        selectinload(Consolidation.questions).options(selectinload(Question.author), selectinload(Question.ratings)),
     ]
 
     @get("/", return_dto=ConsolidationDTO)
