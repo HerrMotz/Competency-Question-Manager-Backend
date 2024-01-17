@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from lib.dto import BaseModel
+from ...lib.dto import BaseModel
 
 from .models import IndividualRating
 

@@ -1,13 +1,13 @@
 from uuid import UUID
 
-from domain.accounts.models import User
-from domain.questions.models import Question
+from ..domain.accounts.models import User
+from ..domain.questions.models import Question
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase
 
 from .orm import session as session_maker
-from domain.ratings.models import Rating
-from domain.comments.models import Comment
+from ..domain.ratings.models import Rating
+from ..domain.comments.models import Comment
 
 
 class MockDataService:

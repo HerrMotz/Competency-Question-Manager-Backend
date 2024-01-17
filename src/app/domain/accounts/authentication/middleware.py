@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Any, Callable
 
-from lib.orm import session
+from ....lib.orm import session
 from litestar import Response
 from litestar.config.app import AppConfig
 from litestar.connection import ASGIConnection
