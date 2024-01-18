@@ -22,6 +22,7 @@ class MailService:
 
     @contextmanager
     def _create_tls_context(self) -> Generator[smtplib.SMTP, None, None]:
+        """Yields a `tls` secured server context (use as context manager)."""
         try:
             context = ssl.create_default_context()
             server = smtplib.SMTP(self.smtp_server, self.port)
@@ -33,15 +34,18 @@ class MailService:
 
     @contextmanager
     def _create_ssl_context(self) -> Generator[smtplib.SMTP_SSL, None, None]:
+        """Yields an `ssl` secured server context (use as context manager)."""
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(self.smtp_server, self.port, context=context) as server:
             server.login(self.username, self.password)
             yield server
 
     def _create_context(self) -> _GeneratorContextManager[smtplib.SMTP]:
+        """Dispatches context use between `ssl` or a `tls` (use as context manager)."""
         return self._create_ssl_context() if self.context == "ssl" else self._create_tls_context()
 
     def _create_message(self, receivers: list[str] | str, subject: str, body: str, html: bool = False) -> MIMEText:
+        """Builds a `MIMEText` message."""
         msg = MIMEText(body, "html" if html else "plain")
         msg["Subject"] = subject
         msg["From"] = self.sender
@@ -55,6 +59,7 @@ class MailService:
             server.send_message(msg)
 
     async def send_email_async(self, receivers: list[str] | str, subject: str, body: str, html: bool = False):
+        """Wraps `send_email` asynchronously using a worker thread."""
         # TODO: maybe change the backend here? trio, anyio ... asyncio, litestar made some changes here in pr #2937:
         # https://github.com/litestar-org/litestar/pull/2937
         await anyio.to_thread.run_sync(self.send_email, receivers, subject, body, html)
@@ -72,6 +77,7 @@ class MailService:
                 server.send_message(msg)
 
     async def send_emails_async(self, messages: Iterable[MailParameters]):
+        """Wraps `send_emails` asynchronously using a worker thread."""
         # TODO: backend changes apply here as well
         await anyio.to_thread.run_sync(self.send_emails, messages)
 
