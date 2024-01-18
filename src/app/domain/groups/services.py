@@ -13,6 +13,7 @@ from sqlalchemy.sql.base import ExecutableOption
 
 from .dtos import GroupCreateDTO, GroupUpdateDTO, GroupUsersAddDTO, GroupUsersRemoveDTO
 from .models import Group
+from domain.projects.models import Project
 
 
 class GroupService:
@@ -121,6 +122,19 @@ class GroupService:
         """Checks wether a given `User` is a member of the given `Group`."""
         statement = select(Group).where(Group.id == id)
         statement = statement.join(User, Group.members)
+        statement = statement.filter(User.id == user_id)
+
+        return True if await session.scalar(statement) else False
+
+    @staticmethod
+    async def is_manager(session: AsyncSession, id: UUID, user_id: UUID) -> bool:
+        """Checks wether a given `User` is a manager of the `Project` a given `Group` belongs to."""
+        statement = (
+            select(Group)
+            .where(Group.id == id)
+            .options(selectinload(Group.project).options(selectinload(Project.managers)))
+        )
+        statement = statement.join(User, Project.managers)
         statement = statement.filter(User.id == user_id)
 
         return True if await session.scalar(statement) else False
