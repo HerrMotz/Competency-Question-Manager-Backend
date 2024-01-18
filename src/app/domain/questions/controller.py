@@ -10,6 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from ..accounts.models import User
+from ..rating.models import Rating
 from .dtos import (
     QuestionCreate,
     QuestionCreateDTO,
@@ -17,8 +19,6 @@ from .dtos import (
     QuestionOverviewDTO,
 )
 from .models import Question
-from ..accounts.models import User
-from ..rating.models import Rating
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
