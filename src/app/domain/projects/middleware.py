@@ -1,12 +1,9 @@
-from typing import TypeVar
 from uuid import UUID
 
 from domain.projects.services import ProjectService
 from lib.middleware import AbstractUserPermissionsMiddleware
 from litestar.datastructures import MutableScopeHeaders
 from sqlalchemy.ext.asyncio import AsyncSession
-
-T = TypeVar("T")
 
 
 class UserProjectPermissionsMiddleware(AbstractUserPermissionsMiddleware):
