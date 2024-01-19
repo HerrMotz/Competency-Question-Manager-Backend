@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from lib.dto import BaseModel
+from lib.dto import BaseModel, NonEmptyString
 from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from pydantic import EmailStr
 
@@ -46,7 +46,7 @@ class GroupDetailDTO(SQLAlchemyDTO[Group]):
 
 
 class GroupCreateDTO(BaseModel):
-    name: str
+    name: NonEmptyString
     project_id: UUID
     members: list[EmailStr] | None = None
 
@@ -60,4 +60,4 @@ class GroupUsersRemoveDTO(BaseModel):
 
 
 class GroupUpdateDTO(BaseModel):
-    name: str | None
+    name: NonEmptyString | None

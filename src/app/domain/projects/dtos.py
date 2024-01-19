@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from lib.dto import BaseModel
+from lib.dto import BaseModel, NonEmptyString
 from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from pydantic import EmailStr
 
@@ -53,8 +53,8 @@ class ProjectDetailDTO(SQLAlchemyDTO[Project]):
 
 
 class ProjectCreateDTO(BaseModel):
-    name: str
-    description: str
+    name: NonEmptyString
+    description: NonEmptyString
     managers: list[EmailStr] | None = None
     engineers: list[EmailStr] | None = None
 
@@ -68,5 +68,5 @@ class ProjectUsersRemoveDTO(BaseModel):
 
 
 class ProjectUpdateDTO(BaseModel):
-    name: str | None
-    description: str | None
+    name: NonEmptyString | None
+    description: NonEmptyString | None
