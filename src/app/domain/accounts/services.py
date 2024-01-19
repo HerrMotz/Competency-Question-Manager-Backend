@@ -1,5 +1,9 @@
+import random
+import string
+from typing import Iterable, NamedTuple
 from uuid import UUID, uuid4
 
+from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,24 +16,26 @@ from .dtos import UserGetDTO, UserLoginDTO, UserRegisterDTO, UserUpdateDTO
 from .exceptions import DelegateHTTPException, EmailInUseException, NameInUseException
 from .models import User
 
+InvitedUsers = NamedTuple("InvitedUsers", [("existing", Iterable[User]), ("created", Iterable[User])])
+
 
 class UserService:
-    encryption_service = EncryptionService()
-
-    def _encrypt_password(self, password: str) -> PasswordHash:
+    @staticmethod
+    def _encrypt_password(encryption: EncryptionService, password: str) -> PasswordHash:
         """Encrypts a given password.
 
-        :param session: An active database session.
+        :param encryption: Encryption service to use for password encryption.
         :param password: Password to encrypt.
         :raises DelegateHTTPException: If the given password is malformed.
         :return: A hashed password.
         """
         try:
-            return self.encryption_service.hash_password(password)
+            return encryption.hash_password(password)
         except (InvalidPasswordFormatException, InvalidPasswordLengthException) as exception:
             raise DelegateHTTPException(exception)
 
-    async def get_users(self, session: AsyncSession) -> list[UserGetDTO]:
+    @staticmethod
+    async def get_users(session: AsyncSession) -> list[UserGetDTO]:
         """Gets all `Users` from the database.
 
         :param session: An active database session.
@@ -39,7 +45,8 @@ class UserService:
             return [UserGetDTO.model_validate(user) for user in users.all()]
         return []
 
-    async def get_user(self, session: AsyncSession, user_id: UUID) -> UserGetDTO | None:
+    @staticmethod
+    async def get_user(session: AsyncSession, user_id: UUID) -> UserGetDTO | None:
         """Gets a specific `User` by his `id`.
 
         :param session: An active database session.
@@ -50,22 +57,33 @@ class UserService:
             return UserGetDTO.model_validate(user)
         return None
 
-    async def get_user_by_credentials(self, session: AsyncSession, data: UserLoginDTO) -> User | None:
+    @staticmethod
+    async def get_user_by_credentials(
+        session: AsyncSession, encryption: EncryptionService, data: UserLoginDTO
+    ) -> User | None:
         """Gets a `User` by his login credentials.
 
         :param session: An active database session.
+        :param encryption: Encryption service to use for password decryption.
         :param data: The `User's` credentials.
         :return: A matching `User` if any.
         """
         if user := await session.scalar(select(User).where(User.email == data.email)):
-            if user.password_hash == self.encryption_service.resolve_password(data.password, user.password_salt):
+            if user.password_hash == encryption.resolve_password(data.password, user.password_salt):
                 return user
         return None
 
-    async def update_user(self, session: AsyncSession, user_id: UUID, data: UserUpdateDTO) -> UserGetDTO | None:
+    @staticmethod
+    async def update_user(
+        session: AsyncSession,
+        encryption: EncryptionService,
+        user_id: UUID,
+        data: UserUpdateDTO,
+    ) -> UserGetDTO | None:
         """Updates a specific `User` by his `id` and the given data.
 
         :param session: An active database session.
+        :param encryption: Encryption service to use for password encryption.
         :param user_id: The `Users` `id`.
         :param data: Any updates that should be applied to the `User`.
         :return: The updated `User` if found.
@@ -77,14 +95,15 @@ class UserService:
             user.is_verified = data.is_verified if data.is_verified else user.is_verified
 
             if data.password:
-                password = self._encrypt_password(data.password)
+                password = UserService._encrypt_password(encryption, data.password)
                 user.password_hash = password.hash
                 user.password_salt = password.salt
 
             return UserGetDTO.model_validate(user)
         return None
 
-    async def delete_user(self, session: AsyncSession, user_id: UUID) -> bool:
+    @staticmethod
+    async def delete_user(session: AsyncSession, user_id: UUID) -> bool:
         """Deletes a specific `User` by his `id`.
 
         :param session: An active database session.
@@ -95,13 +114,19 @@ class UserService:
             await session.delete(user)
         return True if user else False
 
-    async def add_user(self, session: AsyncSession, data: UserRegisterDTO) -> UserGetDTO:
+    @staticmethod
+    async def add_user(
+        session: AsyncSession,
+        encryption: EncryptionService,
+        data: UserRegisterDTO,
+    ) -> UserGetDTO:
         """Add a new `User` to the database and returns him.
 
         Notes:
             * name and email validation will be handled by database constraints
 
         :param session: An active database session.
+        :param encryption: Encryption service to use for password encryption.
         :param data: The parameters for the new `User`.
         :raises NameInUseException: If the given `name` is not unique.
         :raises EmailInUseException: If the given `email` is not unique.
@@ -114,7 +139,7 @@ class UserService:
             raise EmailInUseException(data.email)
 
         uuid = uuid4()
-        password = self._encrypt_password(data.password)
+        password = UserService._encrypt_password(encryption, data.password)
         user = User(
             id=uuid,
             email=data.email,
@@ -127,7 +152,8 @@ class UserService:
         session.add(user)
         return UserGetDTO.model_validate(user)
 
-    async def verify_user(self, session: AsyncSession, user_id: UUID) -> UserGetDTO | None:
+    @staticmethod
+    async def verify_user(session: AsyncSession, user_id: UUID) -> UserGetDTO | None:
         """Directly verifies a specific `User` (alternative to `add_user`).
 
         :param session: An active database session.
@@ -139,5 +165,44 @@ class UserService:
             return UserGetDTO.model_validate(user)
         return None
 
+    @staticmethod
+    def create_temporary_user(encryption: EncryptionService, email: EmailStr) -> User:
+        # TODO: remove this once we are sure names are dropped otherwise enhance this with
+        #       better collision detection/prevention, adding 2 digits does not do it
+        name = uuid4().hex
+        sequence = [
+            *random.sample(string.ascii_lowercase, 4),
+            *random.sample(string.ascii_uppercase, 4),
+            *random.sample(string.digits, 4),
+        ]
+        random.shuffle(sequence)
+        password = "".join(sequence)
+        password_hash = UserService._encrypt_password(encryption, password)
+        return User(
+            email=email,
+            name=name,
+            password_hash=password_hash.hash,
+            password_salt=password_hash.salt,
+            is_system_admin=False,
+            is_verified=False,
+        )
 
-MOCK_USER_SERVICE = UserService()
+    @staticmethod
+    async def get_or_create_users(
+        session: AsyncSession,
+        encryption: EncryptionService,
+        emails: Iterable[EmailStr],
+    ) -> InvitedUsers:
+        mails = set(emails)
+        existing_users = await session.scalars(select(User).where(User.email.in_(mails)))
+        existing_users = existing_users.all()
+
+        mails -= set(map(lambda user: user.email, existing_users))
+        invited_users = [*map(lambda mail: UserService.create_temporary_user(encryption, mail), mails)]
+        session.add_all(invited_users)
+        await session.commit()
+        _ = [await session.refresh(user) for user in invited_users]
+
+        # TODO: send invitation mail to all just created users
+
+        return InvitedUsers(existing_users, invited_users)
