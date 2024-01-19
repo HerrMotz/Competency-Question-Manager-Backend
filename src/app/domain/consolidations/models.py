@@ -10,7 +10,9 @@ from sqlalchemy.schema import ForeignKey
 
 if TYPE_CHECKING:
     from domain.accounts.models import User
+    from domain.projects.models import Project
     from domain.questions.models import Question
+
 
 ConsolidatedQuestions = Table(
     "consolidated_questions",
@@ -23,6 +25,10 @@ ConsolidatedQuestions = Table(
 class Consolidation(UUIDAuditBase):
     name: Mapped[str] = mapped_column(unique=True)
     engineer_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+    project_id: Mapped[UUID] = mapped_column(ForeignKey("project.id"))
 
+    project: Mapped[Project] = relationship(back_populates="consolidations")
     engineer: Mapped[User] = relationship(back_populates="consolidations")
-    questions: Mapped[list[Question]] = relationship(secondary="consolidated_questions", back_populates="consolidations")
+    questions: Mapped[list[Question]] = relationship(
+        secondary="consolidated_questions", back_populates="consolidations"
+    )

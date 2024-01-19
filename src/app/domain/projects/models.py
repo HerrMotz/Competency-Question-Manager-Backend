@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 if TYPE_CHECKING:
     from domain.accounts.models import User
     from domain.groups.models import Group
-
+    from domain.consolidations.models import Consolidation
 ProjectManagers = Table(
     "project_managers",
     UUIDAuditBase.metadata,
@@ -35,6 +35,7 @@ class Project(UUIDAuditBase):
     managers: Mapped[list[User]] = relationship(secondary="project_managers", back_populates="managed_projects")
     engineers: Mapped[list[User]] = relationship(secondary="project_engineers", back_populates="engineered_projects")
     groups: Mapped[list[Group]] = relationship(back_populates="project")
+    consolidations: Mapped[list[Consolidation]] = relationship(back_populates="project")
 
     @hybrid_property
     def no_managers(self) -> int:
