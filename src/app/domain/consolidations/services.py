@@ -142,6 +142,7 @@ class ConsolidationService:
     async def add_questions(
         session: AsyncSession,
         id: UUID,
+        project_id: UUID,
         data: MoveQuestion,
         options: Iterable[ExecutableOption] | None = None,
     ) -> Consolidation:
@@ -149,6 +150,7 @@ class ConsolidationService:
 
         :param session: An active database session.
         :param id: Id of the `Consolidation`.
+        :param project_id: The `Project`s id this `Consolidation` belongs to.
         :param data: A list of `Question` ids.
         :param options: Additional loading options, defaults to None.
         :raises HTTPException: If no `Consolidation` was found.
@@ -157,7 +159,7 @@ class ConsolidationService:
         if not data.ids:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
 
-        consolidation = await ConsolidationService.get_consolidation(session, id, options=options)
+        consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
         consolidation.questions.extend(questions)
         return consolidation
@@ -166,6 +168,7 @@ class ConsolidationService:
     async def remove_questions(
         session: AsyncSession,
         id: UUID,
+        project_id: UUID,
         data: MoveQuestion,
         options: Iterable[ExecutableOption] | None = None,
     ) -> Consolidation:
@@ -173,6 +176,7 @@ class ConsolidationService:
 
         :param session: An active database session.
         :param id: Id of the `Consolidation`.
+        :param project_id: The `Project`s id this `Consolidation` belongs to.
         :param data: A list of `Question` ids.
         :param options: Additional loading options, defaults to None.
         :raises HTTPException: If no `Consolidation` was found.
@@ -181,7 +185,7 @@ class ConsolidationService:
         if not data.ids:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
 
-        consolidation = await ConsolidationService.get_consolidation(session, id, options=options)
+        consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
         _ = [consolidation.questions.remove(question) for question in questions]
         return consolidation

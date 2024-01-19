@@ -88,27 +88,32 @@ class ConsolidationController(Controller):
 
     @delete("/{project_id:uuid}/{consolidation_id:uuid}")
     async def delete_consolidation_handler(
-        self, session: AsyncSession, consolidation_id: UUID, project_id: UUID
+        self,
+        session: AsyncSession,
+        consolidation_id: UUID,
+        project_id: UUID,
     ) -> None:
         """Deletes an existing `Consolidation`."""
         await ConsolidationService.delete_consolidation(session, consolidation_id, project_id)
 
-    @put("/{consolidation_id:uuid}/questions/add", dto=MoveQuestionDTO, return_dto=ConsolidationDTO)
+    @put("/{project_id:uuid}/{consolidation_id:uuid}/questions/add", dto=MoveQuestionDTO, return_dto=ConsolidationDTO)
     async def add_question_handler(
         self,
         session: AsyncSession,
         consolidation_id: UUID,
+        project_id: UUID,
         data: JsonEncoded[MoveQuestion],
     ) -> Consolidation:
         """Add `Questions` to an existing `Consolidation`."""
-        return await ConsolidationService.add_questions(session, consolidation_id, data, self.default_options)
+        return await ConsolidationService.add_questions(session, consolidation_id, project_id, data, self.default_options)
 
-    @put("/{consolidation_id:uuid}/questions/remove", dto=MoveQuestionDTO, return_dto=ConsolidationDTO)
+    @put("/{project_id:uuid}/{consolidation_id:uuid}/questions/remove", dto=MoveQuestionDTO, return_dto=ConsolidationDTO)
     async def remove_question_handler(
         self,
         session: AsyncSession,
         consolidation_id: UUID,
+        project_id: UUID,
         data: JsonEncoded[MoveQuestion],
     ) -> Consolidation:
         """Removes `Questions` from an existing `Consolidation`."""
-        return await ConsolidationService.remove_questions(session, consolidation_id, data, self.default_options)
+        return await ConsolidationService.remove_questions(session, consolidation_id, project_id,data, self.default_options)
