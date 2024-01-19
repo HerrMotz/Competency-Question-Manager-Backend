@@ -67,6 +67,7 @@ class ConsolidationService:
     async def create_consolidation(
         session: AsyncSession,
         user_id: UUID,
+        project_id: UUID,
         data: ConsolidationCreate,
         options: Iterable[ExecutableOption] | None = None,
     ) -> Consolidation:
@@ -74,6 +75,7 @@ class ConsolidationService:
 
         :param session: An active database session.
         :param user_id: The authors id.
+        :param project_id: The `Project`s id this `Consolidation` belongs to.
         :param data: Contents of the `Consolidation`.
         :param options: Additional loading options, defaults to None.
         :raises HTTPException: If database integrity was violated.
@@ -85,7 +87,7 @@ class ConsolidationService:
             questions = questions_.all()
 
         try:
-            consolidation = Consolidation(name=data.name, questions=questions, engineer_id=user_id)
+            consolidation = Consolidation(name=data.name, questions=questions, engineer_id=user_id, project_id=project_id)
             session.add(consolidation)
             await session.commit()
         except IntegrityError as error:
@@ -95,14 +97,15 @@ class ConsolidationService:
         return await ConsolidationService.get_consolidation(session, consolidation.id, options=options)
 
     @staticmethod
-    async def delete_consolidation(session: AsyncSession, id: UUID) -> bool:
+    async def delete_consolidation(session: AsyncSession, id: UUID, project_id: UUID) -> bool:
         """Deletes an existing `Consolidation`.
 
         :param session: An active database session.
         :param id: Id of the `Consolidation`.
+        :param project_id: The `Project`s id this `Consolidation` belongs to.
         :return: `True` if successfully deleted.
         """
-        consolidation = await ConsolidationService.get_consolidation(session, id)
+        consolidation = await ConsolidationService.get_consolidation(session, id, project_id)
         await session.delete(consolidation)
         return True
 
@@ -110,6 +113,7 @@ class ConsolidationService:
     async def update_consolidation(
         session: AsyncSession,
         id: UUID,
+        project_id: UUID,
         data: ConsolidationUpdate,
         options: Iterable[ExecutableOption] | None = None,
     ) -> Consolidation:
@@ -117,6 +121,7 @@ class ConsolidationService:
 
         :param session: An active database session.
         :param id: Id of the `Consolidation`.
+        :param project_id: The `Project`s id this `Consolidation` belongs to.
         :param data: Contents of the `Consolidation`.
         :param options: Additional loading options, defaults to None.
         :raises HTTPException: If database integrity was violated.
@@ -124,7 +129,7 @@ class ConsolidationService:
         :return: The updated `Consolidation`.
         """
         if data.name:
-            consolidation = await ConsolidationService.get_consolidation(session, id, options=options)
+            consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
             consolidation.name = data.name
             try:
                 await session.commit()
