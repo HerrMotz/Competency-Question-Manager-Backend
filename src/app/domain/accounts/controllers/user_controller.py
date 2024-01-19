@@ -9,8 +9,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..authentication.middleware import AuthenticationMiddleware
 from ..authentication.services import EncryptionService
-from ..dtos import UserAccessDTO, UserGetDTO, UserLoginDTO, UserRegisterDTO, UserUpdateDTO
-from ..exceptions import UnmatchedCredentialsException, UserNotFoundException, VerificationRequiredException
+from ..dtos import (
+    UserAccessDTO,
+    UserGetDTO,
+    UserLoginDTO,
+    UserRegisterDTO,
+    UserUpdateDTO,
+)
+from ..exceptions import (
+    UnmatchedCredentialsException,
+    UserNotFoundException,
+    VerificationRequiredException,
+)
+
 from ..guards import system_admin_guard
 from ..services import UserService
 

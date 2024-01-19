@@ -1,22 +1,29 @@
 from typing import Any
 from uuid import UUID
 
-from litestar import Controller, post, Request, get
+from litestar import Controller, Request, get, post
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import Rating
-from .services import RatingService
 from ..accounts.models import User
+from .dtos import RatingGetDTO, RatingSetDTO
+from .services import RatingService
 
 
 class RatingController(Controller):
     path = "/ratings"
+    tags = ["Ratings"]
     service = RatingService()
 
     @post("/")
-    async def create_rating(self, data: Rating, request: Request[User, Any, Any]) -> Rating:
-        return await self.service.set_rating(data.model_copy(update={"user_id": request.user.id}))
+    async def set_rating(
+        self, data: RatingSetDTO, session: AsyncSession, request: Request[User, Any, Any]
+    ) -> RatingSetDTO:
+        return await self.service.set_rating(
+            session=session,
+            rating=data,
+            user_id=request.user.id
+        )
 
-    @get(path="/{question_id:uuid}")
-    async def get_rating(self, question_id: UUID) -> list[Rating]:
-        return await self.service.get_ratings(question_id)
-
+    @get(path="/{question_id:uuid}/user/{user_id:uuid}")
+    async def get_rating(self, session: AsyncSession, user_id: UUID, question_id: UUID) -> RatingGetDTO | None:
+        return await self.service.get_rating(user_id=user_id, question_id=question_id, session=session)

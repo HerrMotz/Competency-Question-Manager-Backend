@@ -1,85 +1,125 @@
-import logging
 import math
+from typing import Any
 from uuid import UUID, uuid4
 
-from litestar import Controller, post, get, delete
+from litestar import Controller, Request, delete, get, post
 from litestar.exceptions import HTTPException
+from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from .models import Question
-from ..rating.models import IndividualRating
+from ..accounts.models import User
+from ..rating.dtos import RatingGetDTO
+from ..rating.models import IndividualRating, Rating
 from ..rating.services import RatingService
+from .models import (
+    Question,
+    QuestionCreatedDTO,
+    QuestionCreateDTO,
+    QuestionDetailDTO,
+    QuestionOverviewDTO,
+)
 
 
 class QuestionController(Controller):
     path = "/questions/"
-    mock_db: dict[UUID, Question] = {}
+    tags = ["Questions"]
     rating_service = RatingService()
 
-    async def aggregate_rating(self, question_id: UUID) -> IndividualRating:
+    @post("/", status_code=HTTP_201_CREATED)
+    async def create_question(
+        self, session: AsyncSession, data: QuestionCreateDTO, request: Request[User, Any, Any]
+    ) -> QuestionCreatedDTO:
         """
-        :param question_id: The ID of the question to calculate the aggregate rating for.
-        :return: The aggregate rating of the question.
-        """
-        ratings = await self.rating_service.get_ratings(question_id)
-        if len(ratings) > 0:
-            mean = sum([rating.rating for rating in ratings]) / len(ratings)
-            return math.ceil(mean) if mean % 1 >= 0.5 else int(mean)
-        else:
-            return 0
+        Creates a question in the session.
 
-    @post("/")
-    async def create_question(self, data: Question) -> Question:
+        :param session: The session object to use for database operations.
+        :param data: The question data to be created.
+        :return: The created question data.
         """
-        Method to create a new question.
+        question = Question(id=uuid4(), question=data.question, author_id=request.user.id)
+        session.add(question)
+        return QuestionCreatedDTO.model_validate(question)
 
-        :param data: The data required to create the question.
-        :type data: Question
-        :return: The created question.
-        :rtype: Question
+    @get("/", status_code=HTTP_200_OK)
+    async def get_questions(self, session: AsyncSession) -> list[QuestionOverviewDTO]:
         """
-        question_id = uuid4()
-        self.mock_db[question_id] = Question(
-            id=question_id, question=data.question, version=data.version, rating=data.rating
+        :param session: AsyncSession object used to execute the database query and retrieve questions.
+        :return: A list of QuestionDTO objects representing the retrieved questions.
+        """
+        questions = await session.scalars(
+            select(Question).options(selectinload(Question.author)).options(selectinload(Question.ratings))
         )
-        return self.mock_db.get(question_id)
-
-    @get()
-    async def list_questions(self) -> list[Question]:
-        """
-        List Questions
-
-        :return: A list of questions.
-        :rtype: list[Question]
-        """
-        return [
-            question.model_copy(update={"rating": await self.aggregate_rating(question.id)})
-            for question in self.mock_db.values()
+        question_dtos = [
+            QuestionOverviewDTO(
+                id=q.id,
+                question=q.question,
+                author_id=q.author_id,
+                author_name=q.author.name,
+                rating=int(sum([rating.rating for rating in q.ratings]) / len(q.ratings)) if len(q.ratings) > 0 else 0,
+            )
+            for q in questions.all()
         ]
+        return question_dtos
 
-    @get(path="/{question_id:uuid}")
-    async def get_question(self, question_id: UUID) -> Question:
+    @get(path="/{question_id:uuid}", status_code=HTTP_200_OK)
+    async def get_question(self, session: AsyncSession, question_id: UUID) -> QuestionDetailDTO:
         """
-        Get a question by id.
+        Retrieves a question by its ID.
 
-        :param question_id: The UUID of the question to retrieve.
-        :return: The Question object corresponding to the given question_id.
-
+        :param session: An `AsyncSession` object representing the database session.
+        :param question_id: A `UUID` object representing the ID of the question to retrieve.
+        :return: A `QuestionDTO` object containing the retrieved question.
+        :raises HTTPException: If the question with the specified ID is not found.
         """
-        if question_id in self.mock_db:
-            return (self.mock_db[question_id]
-                    .model_copy(update={"rating": await self.aggregate_rating(question_id)}))
-        raise HTTPException(status_code=404, detail="Question not found")
 
+        q = await session.scalar(
+            select(Question)
+            .where(Question.id == question_id)
+            .options(selectinload(Question.author))
+            .options(selectinload(Question.ratings).options(selectinload(Rating.user)))
 
-    @delete(path="/{question_id:uuid}")
-    async def delete_question(self, question_id: UUID) -> None:
+        )
+
+        if not q:
+            raise HTTPException(status_code=404, detail="Question not found")
+
+        ratings = [
+            RatingGetDTO(
+                rating=rating.rating,
+                user_id=rating.user_id,
+                user_name=rating.user.name,
+                question_id=rating.question_id,
+            )
+            for rating in q.ratings
+        ]
+        question_dto = QuestionDetailDTO(
+            id=q.id,
+            question=q.question,
+            ratings=ratings,
+            rating=int(sum([rating.rating for rating in ratings]) / len(ratings)) if len(ratings) > 0 else 0,
+            author_id=q.author_id,
+            author_name=q.author.name,
+        )
+        return question_dto
+
+    @delete(path="/{question_id:uuid}", status_code=HTTP_204_NO_CONTENT)
+    async def delete_question(self, session: AsyncSession, question_id: UUID) -> None:
         """
-        Delete a question from the database.
+        Deletes a question from the database.
 
+        :param session: The async session used to interact with the database.
         :param question_id: The UUID of the question to be deleted.
         :return: None
+
+        :raises HTTPException: If the question with the specified ID is not found.
         """
-        if question_id in self.mock_db:
-            self.mock_db.pop(question_id)
-        else:
+
+        question = await session.scalar(select(Question).where(Question.id == question_id))
+
+        if not question:
             raise HTTPException(status_code=404, detail="Question not found")
+
+        await session.delete(question)
+        return

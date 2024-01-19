@@ -7,7 +7,10 @@ from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .authentication.exceptions import InvalidPasswordFormatException, InvalidPasswordLengthException
+from .authentication.exceptions import (
+    InvalidPasswordFormatException,
+    InvalidPasswordLengthException,
+)
 from .authentication.services import EncryptionService, PasswordHash
 from .dtos import UserGetDTO, UserLoginDTO, UserRegisterDTO, UserUpdateDTO
 from .exceptions import DelegateHTTPException, EmailInUseException, NameInUseException

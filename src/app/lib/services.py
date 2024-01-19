@@ -3,10 +3,12 @@ from uuid import UUID
 from domain.accounts.models import User
 from domain.groups.models import Group
 from domain.projects.models import Project
+from domain.questions.models import Question
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase
 
 from .orm import session as session_maker
+from domain.rating.models import Rating
 
 
 class MockDataService:
@@ -88,7 +90,27 @@ class MockDataService:
         ),
     ]
 
-    mock_data: list[DeclarativeBase] = [*mock_users, *mock_projects]
+    mock_questions = [
+        Question(
+            question="How is it?",
+            id = UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+            author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"), ),
+    ]
+
+    mock_ratings = [
+        Rating(
+            rating=4,
+            user_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
+            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952")
+        ),
+        Rating(
+            rating=3,
+            user_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
+            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952")
+        )
+    ]
+
+    mock_data: list[DeclarativeBase] = [*mock_users, *mock_questions, *mock_ratings, *mock_projects]
 
     async def _add_mock_model(self, model: DeclarativeBase) -> None:
         async with session_maker() as session:
