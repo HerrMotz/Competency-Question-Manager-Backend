@@ -36,13 +36,29 @@ class ConsolidationController(Controller):
 
     @get("/", return_dto=ConsolidationDTO)
     async def get_consolidations_handler(self, session: AsyncSession) -> Sequence[Consolidation]:
-        """Gets a single `Consolidation`."""
-        return await ConsolidationService.get_consolidations(session, self.default_options)
-
-    @get("/{consolidation_id:uuid}", return_dto=ConsolidationDTO)
-    async def get_consolidation_handler(self, session: AsyncSession, consolidation_id: UUID) -> Consolidation:
         """Gets a all `Consolidations`."""
-        return await ConsolidationService.get_consolidation(session, consolidation_id, self.default_options)
+        return await ConsolidationService.get_consolidations(session, options=self.default_options)
+
+    @get("/{project_id:uuid}", return_dto=ConsolidationDTO)
+    async def get_project_consolidations_handler(
+        self,
+        session: AsyncSession,
+        project_id: UUID,
+    ) -> Sequence[Consolidation]:
+        """Gets a all `Consolidations` belonging to a specific `Project`."""
+        return await ConsolidationService.get_consolidations(session, project_id, self.default_options)
+
+    @get("/{project_id:uuid}/{consolidation_id:uuid}", return_dto=ConsolidationDTO)
+    async def get_project_consolidation_handler(
+        self,
+        session: AsyncSession,
+        consolidation_id: UUID,
+        project_id: UUID,
+    ) -> Consolidation:
+        """Gets a single `Consolidation` belonging to a specific `Project`."""
+        return await ConsolidationService.get_consolidation(
+            session, consolidation_id, project_id, self.default_options
+        )
 
     @post("/", dto=ConsolidationCreateDTO, return_dto=ConsolidationDTO)
     async def create_consolidation_handler(

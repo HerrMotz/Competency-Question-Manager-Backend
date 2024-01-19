@@ -18,17 +18,23 @@ class ConsolidationService:
     async def get_consolidation(
         session: AsyncSession,
         id: UUID,
+        project_id: UUID | None = None,
         options: Iterable[ExecutableOption] | None = None,
     ) -> Consolidation:
         """Gets a single `Consolidation`.
 
         :param session: An active database session.
         :param id: Id of the `Consolidation`.
+        :param project_id: Id of the `Consolidation`s `Project`..
         :param options: Additional loading options, defaults to None.
         :raises HTTPException: If no `Consolidation` was found.
         :return: A `Consolidation`.
         """
-        statement = select(Consolidation).where(Consolidation.id == id)
+        if project_id:
+            statement = select(Consolidation).where(Consolidation.id == id, Consolidation.project_id == project_id)
+        else:
+            statement = select(Consolidation).where(Consolidation.id == id)
+
         if options:
             statement = statement.options(*options)
 
@@ -39,6 +45,7 @@ class ConsolidationService:
     @staticmethod
     async def get_consolidations(
         session: AsyncSession,
+        project_id: UUID | None = None,
         options: Iterable[ExecutableOption] | None = None,
     ) -> Sequence[Consolidation]:
         """Gets a all `Consolidations`.
@@ -47,7 +54,11 @@ class ConsolidationService:
         :param options: Additional loading options, defaults to None.
         :return: A sequence of all `Consolidations`.
         """
-        statement = select(Consolidation)
+        if project_id:
+            statement = select(Consolidation).where(Consolidation.project_id == project_id)
+        else:
+            statement = select(Consolidation)
+
         if options:
             statement = statement.options(*options)
         return (await session.scalars(statement)).all()
@@ -81,7 +92,7 @@ class ConsolidationService:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST) from error
 
         await session.refresh(consolidation)
-        return await ConsolidationService.get_consolidation(session, consolidation.id, options)
+        return await ConsolidationService.get_consolidation(session, consolidation.id, options=options)
 
     @staticmethod
     async def delete_consolidation(session: AsyncSession, id: UUID) -> bool:
@@ -113,7 +124,7 @@ class ConsolidationService:
         :return: The updated `Consolidation`.
         """
         if data.name:
-            consolidation = await ConsolidationService.get_consolidation(session, id, options)
+            consolidation = await ConsolidationService.get_consolidation(session, id, options=options)
             consolidation.name = data.name
             try:
                 await session.commit()
@@ -141,7 +152,7 @@ class ConsolidationService:
         if not data.ids:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
 
-        consolidation = await ConsolidationService.get_consolidation(session, id, options)
+        consolidation = await ConsolidationService.get_consolidation(session, id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
         consolidation.questions.extend(questions)
         return consolidation
@@ -165,7 +176,7 @@ class ConsolidationService:
         if not data.ids:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
 
-        consolidation = await ConsolidationService.get_consolidation(session, id, options)
+        consolidation = await ConsolidationService.get_consolidation(session, id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
         _ = [consolidation.questions.remove(question) for question in questions]
         return consolidation
