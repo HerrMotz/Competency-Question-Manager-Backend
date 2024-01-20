@@ -5,11 +5,11 @@ from domain.accounts.models import User
 from domain.groups.models import Group
 from domain.projects.models import Project
 from domain.questions.models import Question
+from domain.rating.models import Rating
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase
 
 from .orm import session as session_maker
-from domain.rating.models import Rating
 
 
 class MockDataService:
