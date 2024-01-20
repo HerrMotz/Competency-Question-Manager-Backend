@@ -11,6 +11,8 @@ from litestar.status_codes import HTTP_404_NOT_FOUND
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from domain.questions.models import Question
+
 from .dtos import GroupCreateDTO, GroupDetailDTO, GroupDTO, GroupUpdateDTO, GroupUsersAddDTO, GroupUsersRemoveDTO
 from .models import Group
 from .services import GroupService
@@ -26,6 +28,10 @@ class GroupController(Controller):
     default_options = [
         selectinload(Group.members),
         selectinload(Group.project),
+        selectinload(Group.questions).options(
+            selectinload(Question.author),
+            selectinload(Question.ratings),
+        ),
     ]
 
     @get("/", return_dto=GroupDTO)

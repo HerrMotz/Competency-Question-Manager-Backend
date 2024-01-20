@@ -11,6 +11,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 if TYPE_CHECKING:
     from domain.accounts.models import User
     from domain.projects.models import Project
+    from domain.questions.models import Question
+
+
 
 GroupMembers = Table(
     "group_members",
@@ -26,7 +29,12 @@ class Group(UUIDAuditBase):
 
     project: Mapped[Project] = relationship(back_populates="groups")
     members: Mapped[list[User]] = relationship(secondary="group_members", back_populates="joined_groups")
+    questions: Mapped[list[Question]] = relationship(back_populates="group")
 
     @hybrid_property
     def no_members(self) -> int:
         return len(self.members)
+
+    @hybrid_property
+    def no_questions(self) -> int:
+        return len(self.questions)

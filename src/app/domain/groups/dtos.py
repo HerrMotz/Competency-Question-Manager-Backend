@@ -13,7 +13,7 @@ class GroupDTO(SQLAlchemyDTO[Group]):
             "id",
             "name",
             "no_members",
-            "created_at",
+            "no_questions" "created_at",
             "updated_at",
             "project.id",
             "project.name",
@@ -26,11 +26,12 @@ class GroupDTO(SQLAlchemyDTO[Group]):
 
 class GroupDetailDTO(SQLAlchemyDTO[Group]):
     config = SQLAlchemyDTOConfig(
-        max_nested_depth=1,
+        max_nested_depth=2,
         include={
             "id",
             "name",
             "no_members",
+            "no_questions",
             "created_at",
             "updated_at",
             "project.id",
@@ -41,6 +42,11 @@ class GroupDetailDTO(SQLAlchemyDTO[Group]):
             "members.0.id",
             "members.0.name",
             "members.0.email",
+            "questions.0.question",
+            "questions.0.aggregated_rating",
+            "questions.0.author.id",
+            "questions.0.author.name",
+            "questions.0.author.email",
         },
     )
 

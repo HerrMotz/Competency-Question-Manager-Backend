@@ -22,7 +22,6 @@ class ConsolidationDTO(SQLAlchemyDTO[Consolidation]):
             "questions.0.id",
             "questions.0.question",
             "questions.0.aggregated_rating",
-            "questions.0.author_id",
             "questions.0.author.id",
             "questions.0.author.name",
             "questions.0.author.email",

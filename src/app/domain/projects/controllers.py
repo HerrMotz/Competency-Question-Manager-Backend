@@ -34,7 +34,10 @@ class ProjectController(Controller):
     default_options = [
         selectinload(Project.managers),
         selectinload(Project.engineers),
-        selectinload(Project.groups).options(selectinload(Group.members)),
+        selectinload(Project.groups).options(
+            selectinload(Group.members),
+            selectinload(Group.questions),
+        ),
         selectinload(Project.consolidations).options(
             selectinload(Consolidation.engineer),
             selectinload(Consolidation.questions),

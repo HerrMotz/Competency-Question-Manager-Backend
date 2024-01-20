@@ -45,6 +45,7 @@ class ProjectDetailDTO(SQLAlchemyDTO[Project]):
             "groups.0.id",
             "groups.0.name",
             "groups.0.no_members",
+            "groups.0.no_questions",
             "groups.0.created_at",
             "groups.0.updated_at",
             "groups.0.members.0.id",
