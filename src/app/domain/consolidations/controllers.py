@@ -30,6 +30,7 @@ class ConsolidationController(Controller):
     tags = ["Consolidations"]
 
     default_options = [
+        selectinload(Consolidation.project),
         selectinload(Consolidation.engineer),
         selectinload(Consolidation.questions).options(selectinload(Question.author), selectinload(Question.ratings)),
     ]

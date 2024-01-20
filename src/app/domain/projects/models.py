@@ -48,6 +48,10 @@ class Project(UUIDAuditBase):
     @hybrid_property
     def no_groups(self) -> int:
         return len(self.groups)
+    
+    @hybrid_property
+    def no_consolidations(self) -> int:
+        return len(self.consolidations)
 
     @hybrid_property
     def total_members(self) -> int:

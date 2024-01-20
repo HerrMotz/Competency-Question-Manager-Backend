@@ -2,6 +2,7 @@ from typing import Annotated, Sequence, TypeVar
 from uuid import UUID
 
 from domain.accounts.authentication.services import EncryptionService
+from domain.consolidations.models import Consolidation
 from domain.groups.models import Group
 from litestar import Controller, delete, get, post, put
 from litestar.enums import RequestEncodingType
@@ -34,6 +35,10 @@ class ProjectController(Controller):
         selectinload(Project.managers),
         selectinload(Project.engineers),
         selectinload(Project.groups).options(selectinload(Group.members)),
+        selectinload(Project.consolidations).options(
+            selectinload(Consolidation.engineer),
+            selectinload(Consolidation.questions),
+        ),
     ]
 
     @get("/", return_dto=ProjectDTO)

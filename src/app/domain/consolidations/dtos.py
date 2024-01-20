@@ -15,6 +15,7 @@ class ConsolidationDTO(SQLAlchemyDTO[Consolidation]):
         include={
             "id",
             "name",
+            "no_questions."
             "engineer.id",
             "engineer.name",
             "engineer.email",
@@ -25,6 +26,8 @@ class ConsolidationDTO(SQLAlchemyDTO[Consolidation]):
             "questions.0.author.id",
             "questions.0.author.name",
             "questions.0.author.email",
+            "project.id",
+            "project.name",
         },
     )
 

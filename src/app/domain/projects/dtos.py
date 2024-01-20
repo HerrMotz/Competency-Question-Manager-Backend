@@ -16,6 +16,7 @@ class ProjectDTO(SQLAlchemyDTO[Project]):
             "no_managers",
             "no_engineers",
             "no_groups",
+            "no_consolidations",
             "total_members",
         },
     )
@@ -31,6 +32,7 @@ class ProjectDetailDTO(SQLAlchemyDTO[Project]):
             "no_managers",
             "no_engineers",
             "no_groups",
+            "no_consolidations",
             "total_members",
             "created_at",
             "updated_at",
@@ -48,6 +50,12 @@ class ProjectDetailDTO(SQLAlchemyDTO[Project]):
             "groups.0.members.0.id",
             "groups.0.members.0.name",
             "groups.0.members.0.email",
+            "consolidations.0.id",
+            "consolidations.0.name",
+            "consolidations.0.no_questions",
+            "consolidations.0.engineer.id",
+            "consolidations.0.engineer.name",
+            "consolidations.0.engineer.email",
         },
     )
 
