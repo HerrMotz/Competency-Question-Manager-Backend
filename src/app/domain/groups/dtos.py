@@ -53,7 +53,6 @@ class GroupDetailDTO(SQLAlchemyDTO[Group]):
 
 class GroupCreateDTO(BaseModel):
     name: NonEmptyString
-    project_id: UUID
     members: list[EmailStr] | None = None
 
 
