@@ -1,5 +1,5 @@
 from typing import Annotated, Any, Sequence, TypeVar
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from litestar import Controller, Request, delete, get, post
 from litestar.enums import RequestEncodingType
@@ -9,7 +9,7 @@ from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CON
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
+from sqlalchemy.exc import IntegrityError
 from ..accounts.models import User
 from ..rating.models import Rating
 from .dtos import (
@@ -28,9 +28,15 @@ class QuestionController(Controller):
     path = "/questions/"
     tags = ["Questions"]
 
-    @post("/", dto=QuestionCreateDTO, return_dto=QuestionDetailDTO, status_code=HTTP_201_CREATED)
+    default_options = [selectinload(Question.author), selectinload(Question.ratings)]
+
+    @post("/{group_id}", dto=QuestionCreateDTO, return_dto=QuestionDetailDTO, status_code=HTTP_201_CREATED)
     async def create_question(
-        self, session: AsyncSession, data: JsonEncoded[QuestionCreate], request: Request[User, Any, Any]
+        self,
+        session: AsyncSession,
+        data: JsonEncoded[QuestionCreate],
+        request: Request[User, Any, Any],
+        group_id: UUID,
     ) -> Question:
         """
         Creates a new `Question`
@@ -40,16 +46,20 @@ class QuestionController(Controller):
         :param data: The question data to be created.
         :return: The created question data.
         """
-        question = Question(id=uuid4(), question=data.question, author_id=request.user.id)
-        session.add(question)
-        await session.commit()
-        await session.refresh(question)
-        return await session.scalar(
-            select(Question)
-            .where(Question.id == question.id)
-            .options(selectinload(Question.author))
-            .options(selectinload(Question.ratings))
-        )
+        try:
+            question = Question(question=data.question, author_id=request.user.id, group_id=group_id)
+            session.add(question)
+            await session.commit()
+            await session.refresh(question)
+            question = await session.scalar(
+                select(Question).where(Question.id == question.id).options(*self.default_options)
+            )
+            if question:
+                return question
+            else:
+                raise HTTPException(status_code=404, detail="Question not found.")
+        except IntegrityError:
+            raise HTTPException(status_code=400, detail="Integrity violated.")
 
     @get("/", return_dto=QuestionOverviewDTO, status_code=HTTP_200_OK)
     async def get_questions(self, session: AsyncSession) -> Sequence[Question]:
