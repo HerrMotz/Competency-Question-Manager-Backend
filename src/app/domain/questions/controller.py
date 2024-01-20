@@ -67,14 +67,15 @@ class QuestionController(Controller):
         :param session: AsyncSession object used to execute the database query and retrieve questions.
         :return: A list of QuestionDTO objects representing the retrieved questions.
         """
-        return (
-            await session.scalars(
-                select(Question).options(selectinload(Question.author)).options(selectinload(Question.ratings))
-            )
-        ).all()
+        return (await session.scalars(select(Question).options(*self.default_options))).all()
 
-    @get(path="/{question_id:uuid}", return_dto=QuestionDetailDTO, status_code=HTTP_200_OK)
-    async def get_question(self, session: AsyncSession, question_id: UUID) -> Question:
+    @get("/{group_id}", return_dto=QuestionOverviewDTO, status_code=HTTP_200_OK)
+    async def get_group_questions(self, session: AsyncSession, group_id: UUID) -> Sequence[Question]:
+        """Gets all `Question`s belonging to a given `Group`."""
+        return (await session.scalars(select(Question).options(*self.default_options))).all()
+
+    @get("/{group_id}/{question_id:uuid}", return_dto=QuestionDetailDTO, status_code=HTTP_200_OK)
+    async def get_question(self, session: AsyncSession, question_id: UUID, group_id: UUID) -> Question:
         """
         Retrieves a question by its ID.
 
@@ -86,7 +87,7 @@ class QuestionController(Controller):
 
         question = await session.scalar(
             select(Question)
-            .where(Question.id == question_id)
+            .where(Question.id == question_id, Question.group_id == group_id)
             .options(selectinload(Question.author))
             .options(selectinload(Question.ratings).options(selectinload(Rating.user)))
         )
