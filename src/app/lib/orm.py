@@ -26,7 +26,7 @@ class AsyncSqlPlugin:
     """Wraps `litestar's` `sqlalchemy` plugin."""
 
     dependency_key: InitVar[str] = "session"
-    modules_pattern: str = "domain/**/models.py"
+    modules_pattern: str = "**/domain/**/models.py"
     config: SQLAlchemyAsyncConfig = field(init=False)
     plugin: SQLAlchemyInitPlugin = field(init=False)
 
@@ -46,8 +46,9 @@ class AsyncSqlPlugin:
         `sqlalchemy` does not yet provide something like this.
         """
         cwd = pathlib.Path.cwd()
+        app = pathlib.Path(__file__).parent.parent
         module_paths = cwd.glob(self.modules_pattern)
-        module_names = map(lambda x: ".".join(x.relative_to(cwd).parts).replace(".py", ""), module_paths)
+        module_names = map(lambda x: ".".join(x.relative_to(app).parts).replace(".py", ""), module_paths)
         _, *_ = map(lambda x: importlib.import_module(x), module_names)
 
     def __post_init__(self, dependency_key: str) -> None:
@@ -70,7 +71,7 @@ class AsyncSqlPlugin:
     async def on_startup(self) -> None:
         """Initializes the database."""
         async with self.config.get_engine().begin() as conn:
-            await conn.run_sync(UUIDBase.metadata.drop_all)
+            # await conn.run_sync(UUIDBase.metadata.drop_all)
             await conn.run_sync(UUIDBase.metadata.create_all)
 
 
