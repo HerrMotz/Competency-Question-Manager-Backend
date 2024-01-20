@@ -7,17 +7,13 @@ from litestar.exceptions import HTTPException
 from litestar.params import Body
 from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy.exc import IntegrityError
+
 from ..accounts.models import User
 from ..rating.models import Rating
-from .dtos import (
-    QuestionCreate,
-    QuestionCreateDTO,
-    QuestionDetailDTO,
-    QuestionOverviewDTO,
-)
+from .dtos import QuestionCreate, QuestionCreateDTO, QuestionDetailDTO, QuestionOverviewDTO
 from .models import Question
 
 T = TypeVar("T")
@@ -30,7 +26,7 @@ class QuestionController(Controller):
 
     default_options = [selectinload(Question.author), selectinload(Question.ratings)]
 
-    @post("/{group_id}", dto=QuestionCreateDTO, return_dto=QuestionDetailDTO, status_code=HTTP_201_CREATED)
+    @post("/{group_id:uuid}", dto=QuestionCreateDTO, return_dto=QuestionDetailDTO, status_code=HTTP_201_CREATED)
     async def create_question(
         self,
         session: AsyncSession,
@@ -69,12 +65,12 @@ class QuestionController(Controller):
         """
         return (await session.scalars(select(Question).options(*self.default_options))).all()
 
-    @get("/{group_id}", return_dto=QuestionOverviewDTO, status_code=HTTP_200_OK)
+    @get("/{group_id:uuid}", return_dto=QuestionOverviewDTO, status_code=HTTP_200_OK)
     async def get_group_questions(self, session: AsyncSession, group_id: UUID) -> Sequence[Question]:
         """Gets all `Question`s belonging to a given `Group`."""
         return (await session.scalars(select(Question).options(*self.default_options))).all()
 
-    @get("/{group_id}/{question_id:uuid}", return_dto=QuestionDetailDTO, status_code=HTTP_200_OK)
+    @get("/{group_id:uuid}/{question_id:uuid}", return_dto=QuestionDetailDTO, status_code=HTTP_200_OK)
     async def get_question(self, session: AsyncSession, question_id: UUID, group_id: UUID) -> Question:
         """
         Retrieves a question by its ID.
@@ -97,8 +93,8 @@ class QuestionController(Controller):
 
         return question
 
-    @delete(path="/{question_id:uuid}", status_code=HTTP_204_NO_CONTENT)
-    async def delete_question(self, session: AsyncSession, question_id: UUID) -> None:
+    @delete("/{group_id:uuid}/{question_id:uuid}", status_code=HTTP_204_NO_CONTENT)
+    async def delete_question(self, session: AsyncSession, question_id: UUID, group_id: UUID) -> None:
         """
         Deletes a question from the database.
 
@@ -109,7 +105,9 @@ class QuestionController(Controller):
         :raises HTTPException: If the question with the specified ID is not found.
         """
 
-        question = await session.scalar(select(Question).where(Question.id == question_id))
+        question = await session.scalar(
+            select(Question).where(Question.id == question_id, Question.group_id == group_id)
+        )
 
         if not question:
             raise HTTPException(status_code=404, detail="Question not found")
