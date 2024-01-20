@@ -9,6 +9,7 @@ from .models import Project
 
 class ProjectDTO(SQLAlchemyDTO[Project]):
     config = SQLAlchemyDTOConfig(
+        rename_strategy="camel",
         include={
             "id",
             "name",
@@ -24,6 +25,7 @@ class ProjectDTO(SQLAlchemyDTO[Project]):
 
 class ProjectDetailDTO(SQLAlchemyDTO[Project]):
     config = SQLAlchemyDTOConfig(
+        rename_strategy="camel",
         max_nested_depth=2,
         include={
             "id",

@@ -9,6 +9,7 @@ from .models import Group
 
 class GroupDTO(SQLAlchemyDTO[Group]):
     config = SQLAlchemyDTOConfig(
+        rename_strategy="camel",
         include={
             "id",
             "name",
@@ -26,6 +27,7 @@ class GroupDTO(SQLAlchemyDTO[Group]):
 
 class GroupDetailDTO(SQLAlchemyDTO[Group]):
     config = SQLAlchemyDTOConfig(
+        rename_strategy="camel",
         max_nested_depth=2,
         include={
             "id",
