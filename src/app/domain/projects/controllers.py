@@ -22,6 +22,7 @@ from .dtos import (
 )
 from .models import Project
 from .services import ProjectService
+from .middleware import UserProjectPermissionsMiddleware
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
@@ -30,6 +31,7 @@ JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
 class ProjectController(Controller):
     path = "/projects"
     tags = ["Project"]
+    middleware = [UserProjectPermissionsMiddleware]
 
     default_options = [
         selectinload(Project.managers),

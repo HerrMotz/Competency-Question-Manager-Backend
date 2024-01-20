@@ -3,6 +3,7 @@ from uuid import UUID
 
 from domain.accounts.authentication.services import EncryptionService
 from domain.groups.models import Group
+from domain.projects.middleware import UserProjectPermissionsMiddleware
 from domain.questions.models import Question
 from litestar import Controller, delete, get, post, put
 from litestar.enums import RequestEncodingType
@@ -13,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from .dtos import GroupCreateDTO, GroupDetailDTO, GroupDTO, GroupUpdateDTO, GroupUsersAddDTO, GroupUsersRemoveDTO
+from .middleware import UserGroupPermissionsMiddleware
 from .models import Group
 from .services import GroupService
 
@@ -23,6 +25,7 @@ JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
 class GroupController(Controller):
     path = "/groups"
     tags = ["Groups"]
+    middleware = [UserGroupPermissionsMiddleware, UserProjectPermissionsMiddleware]
 
     default_options = [
         selectinload(Group.members),

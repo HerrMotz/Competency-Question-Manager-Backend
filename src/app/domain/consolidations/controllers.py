@@ -3,6 +3,7 @@ from uuid import UUID
 
 from domain.accounts.models import User
 from domain.consolidations.services import ConsolidationService
+from domain.projects.middleware import UserProjectPermissionsMiddleware
 from domain.questions.models import Question
 from litestar import Controller, Request, delete, get, post, put
 from litestar.enums import RequestEncodingType
@@ -28,6 +29,7 @@ JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
 class ConsolidationController(Controller):
     path = "/consolidations"
     tags = ["Consolidations"]
+    middleware = [UserProjectPermissionsMiddleware]
 
     default_options = [
         selectinload(Consolidation.project),

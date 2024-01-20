@@ -1,6 +1,8 @@
 from typing import Annotated, Any, Sequence, TypeVar
 from uuid import UUID
+
 from domain.consolidations.models import Consolidation
+from domain.groups.middleware import UserGroupPermissionsMiddleware
 from domain.groups.models import Group
 from litestar import Controller, Request, delete, get, post
 from litestar.enums import RequestEncodingType
@@ -23,6 +25,7 @@ JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
 class QuestionController(Controller):
     path = "/questions/"
     tags = ["Questions"]
+    middleware = [UserGroupPermissionsMiddleware]
 
     default_options = [selectinload(Question.author), selectinload(Question.ratings)]
     detail_options = [
