@@ -12,7 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.base import ExecutableOption
 
-from .dtos import ProjectCreateDTO, ProjectUpdateDTO, ProjectUsersAddDTO, ProjectUsersRemoveDTO
+from .dtos import (
+    ProjectCreateDTO,
+    ProjectUpdateDTO,
+    ProjectUsersAddDTO,
+    ProjectUsersRemoveDTO,
+)
 from .models import Project
 
 

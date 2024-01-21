@@ -13,7 +13,14 @@ from litestar.status_codes import HTTP_404_NOT_FOUND
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from .dtos import GroupCreateDTO, GroupDetailDTO, GroupDTO, GroupUpdateDTO, GroupUsersAddDTO, GroupUsersRemoveDTO
+from .dtos import (
+    GroupCreateDTO,
+    GroupDetailDTO,
+    GroupDTO,
+    GroupUpdateDTO,
+    GroupUsersAddDTO,
+    GroupUsersRemoveDTO,
+)
 from .middleware import UserGroupPermissionsMiddleware
 from .models import Group
 from .services import GroupService

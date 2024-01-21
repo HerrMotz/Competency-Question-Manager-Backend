@@ -1,5 +1,5 @@
 from typing import Annotated, Any, Sequence, TypeVar
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from domain.consolidations.models import Consolidation
 from domain.groups.middleware import UserGroupPermissionsMiddleware
@@ -15,7 +15,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..accounts.models import User
-from .dtos import QuestionCreate, QuestionCreateDTO, QuestionDetailDTO, QuestionOverviewDTO
+from .dtos import (
+    QuestionCreate,
+    QuestionCreateDTO,
+    QuestionDetailDTO,
+    QuestionOverviewDTO,
+)
 from .models import Question
 
 T = TypeVar("T")
@@ -46,13 +51,20 @@ class QuestionController(Controller):
         """
         Creates a new `Question`
 
+        :param group_id:
         :param request: Request[User, Any, Any]
         :param session: The session object to use for database operations.
         :param data: The question data to be created.
         :return: The created question data.
         """
         try:
-            question = Question(question=data.question, author_id=request.user.id, group_id=group_id)
+            question = Question(
+                question=data.question,
+                author_id=request.user.id,
+                group_id=group_id,
+                version=1,
+                is_current_version=True,
+            )
             session.add(question)
             await session.commit()
             await session.refresh(question)
@@ -72,13 +84,21 @@ class QuestionController(Controller):
         :param session: AsyncSession object used to execute the database query and retrieve questions.
         :return: A list of QuestionDTO objects representing the retrieved questions.
         """
-        return (await session.scalars(select(Question).options(*self.default_options))).all()
+        return (
+            await session.scalars(
+                select(Question).where(Question.is_current_version == True).options(*self.default_options)
+            )
+        ).all()
 
     @get("/{group_id:uuid}", return_dto=QuestionOverviewDTO, status_code=HTTP_200_OK)
     async def get_group_questions(self, session: AsyncSession, group_id: UUID) -> Sequence[Question]:
         """Gets all `Question`s belonging to a given `Group`."""
         return (
-            await session.scalars(select(Question).where(Question.group_id == group_id).options(*self.default_options))
+            await session.scalars(
+                select(Question)
+                .where(Question.group_id == group_id, Question.is_current_version == True)
+                .options(*self.default_options)
+            )
         ).all()
 
     @get("/{group_id:uuid}/{question_id:uuid}", return_dto=QuestionDetailDTO, status_code=HTTP_200_OK)

@@ -31,6 +31,8 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "consolidations.0.id",
             "consolidations.0.name",
             "consolidations.0.no_questions",
+            "versions.questions.id"
+            "version"
         },
         rename_strategy="camel",
     )
