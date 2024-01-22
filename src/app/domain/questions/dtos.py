@@ -18,6 +18,7 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
         include={
             "id",
             "question",
+            "group_id",
             "ratings.rating",
             "ratings.user.id",
             "ratings.user.name",
@@ -31,6 +32,7 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "consolidations.0.id",
             "consolidations.0.name",
             "consolidations.0.no_questions",
+            "consolidations.0.project_id",
         },
         rename_strategy="camel",
     )
