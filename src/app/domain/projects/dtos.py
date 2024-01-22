@@ -65,7 +65,7 @@ class ProjectDetailDTO(SQLAlchemyDTO[Project]):
 
 class ProjectCreateDTO(BaseModel):
     name: NonEmptyString
-    description: NonEmptyString
+    description: NonEmptyString | None = None
     managers: list[EmailStr] | None = None
     engineers: list[EmailStr] | None = None
 
