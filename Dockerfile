@@ -12,14 +12,12 @@ COPY requirements.txt .
 # Make sure you have a requirements.txt file with litestar and any other dependencies
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install pytest
 
 
 # For development purposes only
 ENV CORS_ALLOW_ORIGIN="*"
 ENV CONNECTION_STRING="sqlite+aiosqlite:///cq-datbase.sqlite"
 
-RUN pytest
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000

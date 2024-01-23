@@ -2,5 +2,4 @@ litestar[standard, structlog, jwt, sqlalchemy]
 aiosqlite 
 pydantic
 pydantic[email]
-pytest
 advanced-alchemy==0.5.5
