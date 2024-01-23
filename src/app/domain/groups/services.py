@@ -155,7 +155,8 @@ class GroupService:
             .where(Group.id == id)
             .options(selectinload(Group.project).options(selectinload(Project.managers)))
         )
-        statement = statement.join(User, Project.managers)
-        statement = statement.filter(User.id == user_id)
-
-        return True if await session.scalar(statement) else False
+        # i think this could be done on the db as well but im not sure how without warnings,
+        # this should be fine given the expected result size
+        if group := await session.scalar(statement):
+            return any(user_id == manager.id for manager in group.project.managers)
+        return False
