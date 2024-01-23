@@ -11,6 +11,8 @@ from litestar.enums import ScopeType
 from litestar.middleware.base import AbstractMiddleware
 from litestar.types import Message, Receive, Scope, Send
 from sqlalchemy.ext.asyncio import AsyncSession
+from litestar import Request
+from litestar import HttpMethod
 
 
 class AbstractUserPermissionsMiddleware(AbstractMiddleware):
@@ -27,6 +29,7 @@ class AbstractUserPermissionsMiddleware(AbstractMiddleware):
 
     scopes = {ScopeType.HTTP}
     exclude = ["/users/register", "/users/login", "/schema"]
+    exclude_http_methods = {HttpMethod.HEAD, HttpMethod.OPTIONS}
 
     @property
     @abstractmethod
@@ -43,6 +46,9 @@ class AbstractUserPermissionsMiddleware(AbstractMiddleware):
         """Wraps the response with this middleware."""
 
         async def send_wrapper(message: Message) -> None:
+            if Request(scope).method in self.exclude_http_methods:
+                return await send(message)
+
             if message["type"] != "http.response.start":
                 return await send(message)
 

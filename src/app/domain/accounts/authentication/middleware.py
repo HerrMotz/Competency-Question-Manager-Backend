@@ -31,7 +31,6 @@ class AuthenticationMiddleware:
             default_token_expiration=timedelta(hours=self.lifetime),
             token_secret=self.secret,
             exclude=self.exclude,
-            exclude_http_methods=["HEAD"],
         )
         object.__setattr__(self, "authenticator", authenticator)
 
