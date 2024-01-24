@@ -2,11 +2,10 @@ from typing import Sequence
 from uuid import UUID
 
 from domain.questions.dtos import QuestionOverviewDTO
-from domain.questions.models import Question
 from litestar import Controller, delete, get, put
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .dtos import PassageDTO, TermDTO
+from .dtos import AnnotationAddDTO, AnnotationRemove, AnnotationRemoveDTO, PassageDTO, TermDTO
 from .models import Passage, Term
 from .services import AnnotationService
 
@@ -29,15 +28,15 @@ class TermController(Controller):
         """Gets all `Passage`s associated with a `Question`."""
         return await AnnotationService.list_by_question(session, question_id)
 
-    @put("/{question_id:uuid}", return_dto=TermDTO)
-    def add(self, session: AsyncSession, question_id: UUID) -> Sequence[Term]:
+    @put("/{question_id:uuid}", return_dto=PassageDTO)
+    async def add(self, session: AsyncSession, question_id: UUID, data: AnnotationAddDTO) -> Sequence[Passage]:
         """Adds one or more `Passage`s and `Term`s to a `Question` or updates existing `Passage`s."""
-        ...
+        return await AnnotationService.annotate(session, question_id, data)
 
-    @delete("/{question_id:uuid}", return_dto=TermDTO)
-    def delete(self, session: AsyncSession, question_id: UUID) -> Sequence[Term]:
-        """Removes one or more `Passage`s and `Term`s from a `Question`."""
-        ...
+    @delete("/{question_id:uuid}", dto=AnnotationRemoveDTO, return_dto=PassageDTO)
+    async def delete(self, session: AsyncSession, question_id: UUID, data: AnnotationRemove) -> Sequence[Passage]:
+        """Removes one or more `Passage`s and `Term`s from a `Question`, returns leftover `Passage`s."""
+        return await AnnotationService.remove_annotations(session, question_id, data)
 
     @get("/{project_id:uuid}/{question_id:uuid}", return_dto=PassageDTO)
     def get_from_question(self, session: AsyncSession, project_id: UUID, question_id: UUID) -> Sequence[PassageDTO]:
