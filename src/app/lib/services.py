@@ -1,13 +1,13 @@
 from uuid import UUID
 
-from ..domain.accounts.models import User
-from ..domain.questions.models import Question
+from domain.accounts.models import User
+from domain.comments.models import Comment
+from domain.questions.models import Question
+from domain.rating.models import Rating
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase
 
 from .orm import session as session_maker
-from ..domain.ratings.models import Rating
-from ..domain.comments.models import Comment
 
 
 class MockDataService:
@@ -97,7 +97,6 @@ class MockDataService:
             author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
             question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
         ),
-
     ]
 
     mock_data: list[DeclarativeBase] = [*mock_users, *mock_questions, *mock_ratings, *mock_comments]

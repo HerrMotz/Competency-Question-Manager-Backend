@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from uuid import UUID
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from advanced_alchemy.base import UUIDAuditBase
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import mapped_column, Mapped, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from ..accounts.models import User

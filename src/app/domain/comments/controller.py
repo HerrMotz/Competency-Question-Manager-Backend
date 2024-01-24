@@ -1,7 +1,7 @@
-from typing import Sequence, Annotated, TypeVar, Any
+from typing import Annotated, Any, Sequence, TypeVar
 from uuid import UUID
 
-from litestar import Controller, get, Request, post
+from litestar import Controller, Request, get, post
 from litestar.enums import RequestEncodingType
 from litestar.params import Body
 from litestar.status_codes import HTTP_200_OK
@@ -9,10 +9,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from .dtos import CommentDTO, CommentCreateDTO, CommentCreate
+from ..accounts.models import User
+from .dtos import CommentCreate, CommentCreateDTO, CommentDTO
 from .models import Comment
 from .services import CommentsService
-from ..accounts.models import User
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]

@@ -1,12 +1,11 @@
 import os
 
-from .domain.comments.controller import CommentController
-from .domain.accounts.authentication.middleware import AuthenticationMiddleware
-from .domain.accounts.controllers import UserController
-from .domain.questions.controller import QuestionController
-from .domain.ratings.controller import RatingController
-from .lib.orm import AsyncSqlPlugin
-from .lib.services import MockDataService
+from domain.accounts.authentication.middleware import AuthenticationMiddleware
+from domain.accounts.controllers import UserController
+from domain.questions.controller import QuestionController
+from domain.rating.controller import RatingController
+from lib.orm import AsyncSqlPlugin
+from lib.services import MockDataService
 from litestar import Litestar
 from litestar.config.cors import CORSConfig
 from litestar.openapi import OpenAPIConfig

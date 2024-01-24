@@ -4,18 +4,17 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from ...lib.dto import BaseModel
+from lib.dto import BaseModel
 from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..comments.dtos import CommentGet
 from ..ratings.dtos import RatingGetDTO
 
 if TYPE_CHECKING:
     from ..accounts.models import User
-    from ..ratings.models import Rating
     from ..comments.models import Comment
+    from ..ratings.models import Rating
 
 
 class QuestionOverviewDTO(BaseModel):

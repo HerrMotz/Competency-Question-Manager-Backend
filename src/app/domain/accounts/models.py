@@ -6,12 +6,10 @@ from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-
-
 if TYPE_CHECKING:
+    from domain.comments.models import Comment
     from domain.questions.models import Question
     from domain.ratings.models import Rating
-    from domain.comments.models import Comment
 
 
 class User(UUIDAuditBase):

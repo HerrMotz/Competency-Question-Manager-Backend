@@ -1,10 +1,9 @@
 from uuid import UUID
 
 from advanced_alchemy.extensions.litestar import SQLAlchemyDTO, SQLAlchemyDTOConfig
+from lib.dto import BaseModel
 from litestar.contrib.pydantic import PydanticDTO
 from litestar.dto import DTOConfig
-
-from ...lib.dto import BaseModel
 
 from .models import Comment
 

@@ -8,21 +8,20 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from ..accounts.models import User
+from ..comments.models import Comment
+from ..ratings.dtos import RatingGetDTO
+from ..ratings.models import Rating
+from ..ratings.services import RatingService
 from .models import (
+    CommentAuthorDTO,
+    CommentQuestionDTO,
     Question,
     QuestionCreatedDTO,
     QuestionCreateDTO,
     QuestionDetailDTO,
     QuestionOverviewDTO,
-    CommentQuestionDTO,
-    CommentAuthorDTO,
 )
-from ..accounts.models import User
-from ..comments.dtos import CommentGet, CommentGetDTO, CommentDTO
-from ..comments.models import Comment
-from ..ratings.dtos import RatingGetDTO
-from ..ratings.models import Rating
-from ..ratings.services import RatingService
 
 
 class QuestionController(Controller):
