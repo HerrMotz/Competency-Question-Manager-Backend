@@ -8,25 +8,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .dtos import PassageDTO, TermDTO
 from .models import Passage, Term
+from .services import AnnotationService
 
 
 class TermController(Controller):
     path = "/terms"
 
     @get("/", return_dto=TermDTO)
-    def get_all(self, session: AsyncSession) -> Sequence[Term]:
-        """Gets all `Terms` with in the system."""
-        ...
+    async def get_all(self, session: AsyncSession) -> Sequence[Term]:
+        """Gets all `Terms` within the system."""
+        return await AnnotationService.list(session)
 
     @get("/{project_id:uuid}", return_dto=TermDTO)
-    def get_all_project(self, session: AsyncSession, project_id: UUID) -> Sequence[Term]:
+    async def get_all_project(self, session: AsyncSession, project_id: UUID) -> Sequence[Term]:
         """Gets all `Passage`s and `Term`s within a `Project`."""
-        ...
+        return await AnnotationService.list(session, (Term.project_id == project_id,))
 
-    @get("/{question_id:uuid}", return_dto=TermDTO)
-    def get_all_question_project(self, session: AsyncSession, question_id: UUID) -> Sequence[Term]:
-        """Gets all `Passage`s and `Term`s associated with a `Question`."""
-        ...
+    @get("/{question_id:uuid}", return_dto=PassageDTO)
+    async def get_all_question_project(self, session: AsyncSession, question_id: UUID) -> Sequence[Passage]:
+        """Gets all `Passage`s associated with a `Question`."""
+        return await AnnotationService.list_by_question(session, question_id)
 
     @put("/{question_id:uuid}", return_dto=TermDTO)
     def add(self, session: AsyncSession, question_id: UUID) -> Sequence[Term]:
