@@ -1,10 +1,10 @@
 from typing import Annotated, Any, Sequence, TypeVar
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from domain.consolidations.models import Consolidation
 from domain.groups.middleware import UserGroupPermissionsMiddleware
 from domain.groups.models import Group
-from litestar import Controller, Request, delete, get, post
+from litestar import Controller, Request, delete, get, post, put
 from litestar.enums import RequestEncodingType
 from litestar.exceptions import HTTPException
 from litestar.params import Body
@@ -14,7 +14,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..accounts.models import User
 from .dtos import (
     QuestionCreate,
     QuestionCreateDTO,
@@ -22,6 +21,8 @@ from .dtos import (
     QuestionOverviewDTO,
 )
 from .models import Question
+from ..accounts.models import User
+from ..versions.models import Version
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
@@ -38,6 +39,7 @@ class QuestionController(Controller):
         selectinload(Question.ratings),
         selectinload(Question.consolidations).options(selectinload(Consolidation.questions)),
         selectinload(Question.group).options(selectinload(Group.project)),
+        selectinload(Question.versions).options(selectinload(Version.questions)),
     ]
 
     @post("/{group_id:uuid}", dto=QuestionCreateDTO, return_dto=QuestionDetailDTO, status_code=HTTP_201_CREATED)
@@ -122,6 +124,45 @@ class QuestionController(Controller):
             raise HTTPException(status_code=404, detail="Question not found")
 
         return question
+
+    @put(
+        "/{group_id:uuid}/{question_id:uuid}",
+        dto=QuestionCreateDTO,
+        return_dto=QuestionDetailDTO,
+        status_code=HTTP_200_OK,
+    )
+    async def update_question(
+        self,
+        session: AsyncSession,
+        data: JsonEncoded[QuestionCreate],
+        question_id: UUID,
+        group_id: UUID,
+        request: Request[User, Any, Any],
+    ) -> Question:
+        question = await session.scalar(select(Question).where(Question.id == question_id))
+        question.is_current_version = False
+        # TODO add version relation
+
+        try:
+            updated_question = Question(
+                question=data.question,
+                author_id=request.user.id,
+                group_id=group_id,
+                version=question.version + 1,
+                is_current_version=True
+            )
+            session.add(updated_question)
+            await session.commit()
+            await session.refresh(updated_question)
+            updated_question = await session.scalar(
+                select(Question).where(Question.id == updated_question.id).options(*self.detail_options)
+            )
+            if updated_question:
+                return updated_question
+            else:
+                raise HTTPException(status_code=404, detail="Question not found.")
+        except IntegrityError:
+            raise HTTPException(status_code=400, detail="Integrity violated.")
 
     @delete("/{group_id:uuid}/{question_id:uuid}", status_code=HTTP_204_NO_CONTENT)
     async def delete_question(self, session: AsyncSession, question_id: UUID, group_id: UUID) -> None:
