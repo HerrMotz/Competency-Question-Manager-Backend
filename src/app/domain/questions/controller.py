@@ -14,12 +14,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..accounts.models import User
-from ..comments.models import Comment
-from ..ratings.dtos import RatingGetDTO
-from ..ratings.models import Rating
-from ..ratings.services import RatingService
-
 from .dtos import (
     QuestionCreate,
     QuestionCreateDTO,
@@ -28,7 +22,7 @@ from .dtos import (
 )
 from .models import Question
 from ..accounts.models import User
-from ..versions.models import Version
+from ..comments.models import Comment
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]

@@ -30,5 +30,5 @@ class User(UUIDAuditBase):
     joined_groups: Mapped[list[Group]] = relationship(secondary="group_members", back_populates="members")
     consolidations: Mapped[list[Consolidation]] = relationship(back_populates="engineer")
     questions: Mapped[list[Question]] = relationship(back_populates="author")
-    ratings: Mapped[list[Rating]] = relationship(back_populates="user")
+    ratings: Mapped[list[Rating]] = relationship(back_populates="author")
     comments: Mapped[list[Comment]] = relationship(back_populates="author")
