@@ -13,7 +13,8 @@ if TYPE_CHECKING:
     from domain.accounts.models import User
     from domain.consolidations.models import Consolidation
     from domain.groups.models import Group
-    from domain.rating.models import Rating
+    from domain.ratings.models import Rating
+    from domain.comments.models import Comment
 
 
 class Question(UUIDAuditBase):
@@ -26,12 +27,11 @@ class Question(UUIDAuditBase):
     author: Mapped[User] = relationship(back_populates="questions")
     group: Mapped[Group] = relationship(back_populates="questions")
     ratings: Mapped[list[Rating]] = relationship(back_populates="question", cascade="all, delete-orphan")
+    comments: Mapped[list[Comment]] = relationship(back_populates="question", cascade="all, delete-orphan")
     consolidations: Mapped[list[Consolidation]] = relationship(
         secondary="consolidated_questions", back_populates="questions"
     )
-    versions: Mapped[List[Version]] = relationship(
-        secondary="version_questions", back_populates="questions"
-    )
+    versions: Mapped[List[Version]] = relationship(secondary="version_questions", back_populates="questions")
 
     @hybrid_property
     def aggregated_rating(self) -> int:

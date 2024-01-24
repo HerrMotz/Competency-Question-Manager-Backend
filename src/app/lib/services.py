@@ -5,8 +5,9 @@ from domain.consolidations.models import Consolidation
 from domain.groups.models import Group
 from domain.projects.models import Project
 from domain.questions.models import Question
-from domain.rating.models import Rating
+from domain.ratings.models import Rating
 from domain.versions.models import Version
+from domain.comments.models import Comment
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase
 
@@ -146,12 +147,30 @@ class MockDataService:
     mock_ratings = [
         Rating(
             rating=4,
-            user_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
+            author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
             question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
         ),
         Rating(
             rating=3,
-            user_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
+            author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
+            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+        ),
+    ]
+
+    mock_comments = [
+        Comment(
+            comment="Das ist eine sehr gute Frage!",
+            author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
+            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+        ),
+        Comment(
+            comment="Ja wirklich gut!",
+            author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
+            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+        ),
+        Comment(
+            comment="Und auch ein sehr spannender Kommentar!",
+            author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
             question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
         ),
     ]

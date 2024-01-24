@@ -22,7 +22,7 @@ from .dtos import (
 )
 from .models import Question
 from ..accounts.models import User
-from ..versions.models import Version
+from ..comments.models import Comment
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
@@ -39,7 +39,8 @@ class QuestionController(Controller):
         selectinload(Question.ratings),
         selectinload(Question.consolidations).options(selectinload(Consolidation.questions)),
         selectinload(Question.group).options(selectinload(Group.project)),
-        selectinload(Question.versions).options(selectinload(Version.questions)),
+        selectinload(Question.versions),
+        selectinload(Question.comments).options(selectinload(Comment.author)),
     ]
 
     @post("/{group_id:uuid}", dto=QuestionCreateDTO, return_dto=QuestionDetailDTO, status_code=HTTP_201_CREATED)

@@ -11,16 +11,16 @@ from .models import Rating
 class RatingService:
     async def set_rating(self, session: AsyncSession, rating: RatingSetDTO, user_id: UUID) -> RatingSetDTO:
         """
-        Set the rating for a specific model and save it to the database.
+        Set the ratings for a specific model and save it to the database.
 
         :param user_id:
         :param rating: RatingSetDTO
         :param session: AsyncSession
-        :return: The saved rating.
+        :return: The saved ratings.
         :rtype: RatingSetDTO
         """
         if rating_from_db := await session.scalar(
-            select(Rating).where(Rating.user_id == user_id).where(Rating.question_id == rating.question_id)
+            select(Rating).where(Rating.author_id == user_id).where(Rating.question_id == rating.question_id)
         ):
             rating_from_db.rating = rating.rating
             return RatingSetDTO.model_validate(rating_from_db)
@@ -40,23 +40,23 @@ class RatingService:
         :rtype: list[RatingGetDTO]
         """
         ratings = await session.scalars(
-            select(Rating).where(Rating.question_id == question_id).options(selectinload(Rating.user))
+            select(Rating).where(Rating.question_id == question_id).options(selectinload(Rating.author))
         )
-        return [RatingGetDTO.model_copy(rating, update={"user_name": rating.user.name}) for rating in ratings]
+        return [RatingGetDTO.model_copy(rating, update={"user_name": rating.author.name}) for rating in ratings]
 
     async def get_rating(self, session: AsyncSession, user_id: UUID, question_id: UUID) -> RatingGetDTO | None:
         rating = await session.scalar(
             select(Rating)
-            .where(Rating.user_id == user_id)
+            .where(Rating.author_id == user_id)
             .where(Rating.question_id == question_id)
-            .options(selectinload(Rating.user))
+            .options(selectinload(Rating.author))
         )
         if rating:
             return RatingGetDTO(
                 rating=rating.rating,
                 question_id=rating.question_id,
-                user_id=rating.user_id,
-                user_name=rating.user.name,
+                user_id=rating.author_id,
+                user_name=rating.author.name,
             )
 
         else:

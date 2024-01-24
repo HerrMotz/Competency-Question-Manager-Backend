@@ -19,7 +19,7 @@ IndividualRating = Annotated[int, Field(gt=0, le=5)]
 class Rating(UUIDAuditBase):
     rating: Mapped[int]
     question_id: Mapped[UUID] = mapped_column(ForeignKey("question.id"))
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+    author_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
 
-    user: Mapped[User] = relationship(back_populates="ratings")
+    author: Mapped[User] = relationship(back_populates="ratings")
     question: Mapped[Question] = relationship(back_populates="ratings")
