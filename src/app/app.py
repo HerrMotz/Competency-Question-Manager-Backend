@@ -13,6 +13,7 @@ from domain.groups.controllers import GroupController
 from domain.projects.controllers import ProjectController
 from domain.questions.controller import QuestionController
 from domain.rating.controller import RatingController
+from domain.terms.controllers import TermController
 from lib.services import MockDataService
 from litestar import Litestar
 from litestar.config.cors import CORSConfig
@@ -34,6 +35,7 @@ app = Litestar(
         ProjectController,
         GroupController,
         ConsolidationController,
+        TermController,
     ],
     cors_config=cors_config,
     openapi_config=openapi_config,
