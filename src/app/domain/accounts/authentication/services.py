@@ -3,7 +3,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from typing import NamedTuple
-
+from litestar.di import Provide
 from .exceptions import InvalidPasswordFormatException, InvalidPasswordLengthException
 
 PasswordHash = NamedTuple("PasswordHash", [("hash", bytes), ("salt", bytes)])
@@ -66,3 +66,8 @@ class EncryptionService:
         :return: The resolved `password`.
         """
         return self._hash_password(password.encode(), salt)
+
+    @property
+    def dependency(self) -> Provide:
+        """Gets this service as dependency for litestar's dependency injection."""
+        return Provide(lambda: self, sync_to_thread=False)

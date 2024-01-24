@@ -1,11 +1,7 @@
 from uuid import UUID
 
 from litestar.exceptions import HTTPException, NotAuthorizedException
-from litestar.status_codes import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_401_UNAUTHORIZED,
-    HTTP_404_NOT_FOUND,
-)
+from litestar.status_codes import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 
 
 class UserNotFoundException(HTTPException):
@@ -60,28 +56,4 @@ class SystemAdministratorRequiredException(NotAuthorizedException):
 
     def __init__(self) -> None:
         detail = "This route may only be accessed by a system administrator."
-        super().__init__(detail=detail, status_code=HTTP_401_UNAUTHORIZED)
-
-
-class ProjectManagerRequiredException(NotAuthorizedException):
-    """Raised when a `User` without the `SystemAdministrator` or `ProjectManager` role tries to modify project settings."""
-
-    def __init__(self) -> None:
-        detail = "This route may only be accessed by a system administrator or project manager."
-        super().__init__(detail=detail, status_code=HTTP_401_UNAUTHORIZED)
-
-
-class ProjectMembershipRequiredException(NotAuthorizedException):
-    """Raised when a `User` tries to access content of a project he does not belong to."""
-
-    def __init__(self) -> None:
-        detail = "This route may only be accessed by project members."
-        super().__init__(detail=detail, status_code=HTTP_401_UNAUTHORIZED)
-
-
-class GroupMembershipRequiredException(NotAuthorizedException):
-    """Raised when a `User` tries to access content of a group he does not belong to."""
-
-    def __init__(self) -> None:
-        detail = "This route may only be accessed by group members."
         super().__init__(detail=detail, status_code=HTTP_401_UNAUTHORIZED)

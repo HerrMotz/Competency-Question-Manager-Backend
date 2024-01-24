@@ -17,7 +17,7 @@ sys.path.append("src/app/")
 from app import app
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def test_client() -> TestClient[Litestar]:
     return TestClient(app=app)  # type: ignore
 
