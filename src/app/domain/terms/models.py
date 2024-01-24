@@ -6,7 +6,7 @@ from uuid import UUID
 from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.schema import ForeignKey
+from sqlalchemy.schema import ForeignKey, UniqueConstraint
 
 if TYPE_CHECKING:
     from domain.projects.models import Project
@@ -14,8 +14,9 @@ if TYPE_CHECKING:
 
 
 class Term(UUIDAuditBase):
-    content: Mapped[str] = mapped_column()
+    __table_args__ = (UniqueConstraint("content", "project_id"),)
 
+    content: Mapped[str] = mapped_column()
     project_id: Mapped[UUID] = mapped_column(ForeignKey("project.id"))
 
     project: Mapped[Project] = relationship(back_populates="terms")
@@ -31,6 +32,8 @@ AnnotatedPassages = Table(
 
 
 class Passage(UUIDAuditBase):
+    __table_args__ = (UniqueConstraint("content", "term_id"),)
+
     content: Mapped[str] = mapped_column()
 
     author_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
