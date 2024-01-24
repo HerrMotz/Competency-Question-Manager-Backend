@@ -1,10 +1,16 @@
-from typing import Any
-from uuid import UUID, uuid4
+from typing import Annotated, Any, Sequence, TypeVar
+from uuid import UUID
 
-from litestar import Controller, Request, delete, get, post
+from domain.consolidations.models import Consolidation
+from domain.groups.middleware import UserGroupPermissionsMiddleware
+from domain.groups.models import Group
+from litestar import Controller, Request, delete, get, post, put
+from litestar.enums import RequestEncodingType
 from litestar.exceptions import HTTPException
+from litestar.params import Body
 from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -13,60 +19,99 @@ from ..comments.models import Comment
 from ..ratings.dtos import RatingGetDTO
 from ..ratings.models import Rating
 from ..ratings.services import RatingService
-from .models import (
-    CommentAuthorDTO,
-    CommentQuestionDTO,
-    Question,
-    QuestionCreatedDTO,
+
+from .dtos import (
+    QuestionCreate,
     QuestionCreateDTO,
     QuestionDetailDTO,
     QuestionOverviewDTO,
 )
+from .models import Question
+from ..accounts.models import User
+from ..versions.models import Version
+
+T = TypeVar("T")
+JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
 
 
 class QuestionController(Controller):
     path = "/questions/"
     tags = ["Questions"]
-    rating_service = RatingService()
+    middleware = [UserGroupPermissionsMiddleware]
 
-    @post("/", status_code=HTTP_201_CREATED)
+    default_options = [selectinload(Question.author), selectinload(Question.ratings)]
+    detail_options = [
+        selectinload(Question.author),
+        selectinload(Question.ratings),
+        selectinload(Question.consolidations).options(selectinload(Consolidation.questions)),
+        selectinload(Question.group).options(selectinload(Group.project)),
+        selectinload(Question.versions),
+        selectinload(Question.comments).options(selectinload(Comment.author)),
+    ]
+
+    @post("/{group_id:uuid}", dto=QuestionCreateDTO, return_dto=QuestionDetailDTO, status_code=HTTP_201_CREATED)
     async def create_question(
-        self, session: AsyncSession, data: QuestionCreateDTO, request: Request[User, Any, Any]
-    ) -> QuestionCreatedDTO:
+        self,
+        session: AsyncSession,
+        data: JsonEncoded[QuestionCreate],
+        request: Request[User, Any, Any],
+        group_id: UUID,
+    ) -> Question:
         """
-        Creates a question in the session.
+        Creates a new `Question`
 
+        :param group_id:
+        :param request: Request[User, Any, Any]
         :param session: The session object to use for database operations.
         :param data: The question data to be created.
         :return: The created question data.
         """
-        question = Question(id=uuid4(), question=data.question, author_id=request.user.id)
-        session.add(question)
-        return QuestionCreatedDTO.model_validate(question)
+        try:
+            question = Question(
+                question=data.question,
+                author_id=request.user.id,
+                group_id=group_id,
+                version=1,
+                is_current_version=True,
+            )
+            session.add(question)
+            await session.commit()
+            await session.refresh(question)
+            question = await session.scalar(
+                select(Question).where(Question.id == question.id).options(*self.detail_options)
+            )
+            if question:
+                return question
+            else:
+                raise HTTPException(status_code=404, detail="Question not found.")
+        except IntegrityError:
+            raise HTTPException(status_code=400, detail="Integrity violated.")
 
-    @get("/", status_code=HTTP_200_OK)
-    async def get_questions(self, session: AsyncSession) -> list[QuestionOverviewDTO]:
+    @get("/", return_dto=QuestionOverviewDTO, status_code=HTTP_200_OK)
+    async def get_questions(self, session: AsyncSession) -> Sequence[Question]:
         """
         :param session: AsyncSession object used to execute the database query and retrieve questions.
         :return: A list of QuestionDTO objects representing the retrieved questions.
         """
-        questions = await session.scalars(
-            select(Question).options(selectinload(Question.author)).options(selectinload(Question.ratings))
-        )
-        question_dtos = [
-            QuestionOverviewDTO(
-                id=q.id,
-                question=q.question,
-                author_id=q.author_id,
-                author_name=q.author.name,
-                rating=int(sum([rating.rating for rating in q.ratings]) / len(q.ratings)) if len(q.ratings) > 0 else 0,
+        return (
+            await session.scalars(
+                select(Question).where(Question.is_current_version == True).options(*self.default_options)
             )
-            for q in questions.all()
-        ]
-        return question_dtos
+        ).all()
 
-    @get(path="/{question_id:uuid}", status_code=HTTP_200_OK)
-    async def get_question(self, session: AsyncSession, question_id: UUID) -> QuestionDetailDTO:
+    @get("/{group_id:uuid}", return_dto=QuestionOverviewDTO, status_code=HTTP_200_OK)
+    async def get_group_questions(self, session: AsyncSession, group_id: UUID) -> Sequence[Question]:
+        """Gets all `Question`s belonging to a given `Group`."""
+        return (
+            await session.scalars(
+                select(Question)
+                .where(Question.group_id == group_id, Question.is_current_version == True)
+                .options(*self.default_options)
+            )
+        ).all()
+
+    @get("/{group_id:uuid}/{question_id:uuid}", return_dto=QuestionDetailDTO, status_code=HTTP_200_OK)
+    async def get_question(self, session: AsyncSession, question_id: UUID, group_id: UUID) -> Question:
         """
         Retrieves a question by its ID.
 
@@ -76,50 +121,58 @@ class QuestionController(Controller):
         :raises HTTPException: If the question with the specified ID is not found.
         """
 
-        q = await session.scalar(
+        question = await session.scalar(
             select(Question)
-            .where(Question.id == question_id)
-            .options(selectinload(Question.author))
-            .options(selectinload(Question.ratings).options(selectinload(Rating.author)))
-            .options(selectinload(Question.comments).options(selectinload(Comment.author)))
+            .where(Question.id == question_id, Question.group_id == group_id)
+            .options(*self.detail_options)
         )
 
-        if not q:
+        if not question:
             raise HTTPException(status_code=404, detail="Question not found")
 
-        ratings = [
-            RatingGetDTO(
-                rating=rating.rating,
-                author_id=rating.author.id,
-                author_name=rating.author.name,
-                question_id=rating.question_id,
-            )
-            for rating in q.ratings
-        ]
+        return question
 
-        comments = [
-            CommentQuestionDTO(
-                comment=comment.comment,
-                questionId=comment.question_id,
-                authorId=comment.author_id,
-                author=CommentAuthorDTO(name=comment.author.name),
-                createdAt=comment.created_at.timestamp(),
-            )
-            for comment in q.comments
-        ]
-        question_dto = QuestionDetailDTO(
-            id=q.id,
-            question=q.question,
-            ratings=ratings,
-            rating=int(sum([rating.rating for rating in ratings]) / len(ratings)) if len(ratings) > 0 else 0,
-            author_id=q.author_id,
-            author_name=q.author.name,
-            comments=comments,
-        )
-        return question_dto
+    @put(
+        "/{group_id:uuid}/{question_id:uuid}",
+        dto=QuestionCreateDTO,
+        return_dto=QuestionDetailDTO,
+        status_code=HTTP_200_OK,
+    )
+    async def update_question(
+        self,
+        session: AsyncSession,
+        data: JsonEncoded[QuestionCreate],
+        question_id: UUID,
+        group_id: UUID,
+        request: Request[User, Any, Any],
+    ) -> Question:
+        question = await session.scalar(select(Question).where(Question.id == question_id))
+        question.is_current_version = False
+        # TODO add version relation
 
-    @delete(path="/{question_id:uuid}", status_code=HTTP_204_NO_CONTENT)
-    async def delete_question(self, session: AsyncSession, question_id: UUID) -> None:
+        try:
+            updated_question = Question(
+                question=data.question,
+                author_id=request.user.id,
+                group_id=group_id,
+                version=question.version + 1,
+                is_current_version=True
+            )
+            session.add(updated_question)
+            await session.commit()
+            await session.refresh(updated_question)
+            updated_question = await session.scalar(
+                select(Question).where(Question.id == updated_question.id).options(*self.detail_options)
+            )
+            if updated_question:
+                return updated_question
+            else:
+                raise HTTPException(status_code=404, detail="Question not found.")
+        except IntegrityError:
+            raise HTTPException(status_code=400, detail="Integrity violated.")
+
+    @delete("/{group_id:uuid}/{question_id:uuid}", status_code=HTTP_204_NO_CONTENT)
+    async def delete_question(self, session: AsyncSession, question_id: UUID, group_id: UUID) -> None:
         """
         Deletes a question from the database.
 
@@ -130,7 +183,9 @@ class QuestionController(Controller):
         :raises HTTPException: If the question with the specified ID is not found.
         """
 
-        question = await session.scalar(select(Question).where(Question.id == question_id))
+        question = await session.scalar(
+            select(Question).where(Question.id == question_id, Question.group_id == group_id)
+        )
 
         if not question:
             raise HTTPException(status_code=404, detail="Question not found")

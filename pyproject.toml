@@ -27,3 +27,16 @@ profile = "black"
 
 [tool.pyright]
 typeCheckingMode = "strict"
+
+[tool.pytest.ini_options]
+addopts = ["-ra", "--ignore", "migrations"]
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning:pkg_resources",
+    "ignore::DeprecationWarning:google.*",
+    "ignore::DeprecationWarning:passlib.*",
+    "ignore::DeprecationWarning:aiosql.*",
+    "ignore::DeprecationWarning:litestar.constants.*",
+    "ignore::DeprecationWarning:litestar.utils.*",
+    "ignore::DeprecationWarning:litestar.contrib.*",
+]
