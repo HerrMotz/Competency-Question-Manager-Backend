@@ -42,6 +42,21 @@ class AnnotationService:
         return scalars.all()
 
     @staticmethod
+    async def list_questions_by_term(
+        session: AsyncSession,
+        term_id: UUID,
+        project_id: UUID,
+        options: Iterable[ExecutableOption] | None = None,
+    ) -> Sequence[Question]:
+        options = [] if not options else options
+        subquery = select(Term).where(Term.id == term_id, Term.project_id == project_id).subquery()
+        statement = select(Question).join(Passage)
+        statement = statement.join(subquery, Passage.term_id == subquery.c.term_id)
+        statement = statement.options(*options)
+        scalars = await session.scalars(statement)
+        return scalars.all()
+
+    @staticmethod
     async def get_or_create_term(session: AsyncSession, project_id: UUID, term: str) -> Term:
         if model := await session.scalar(select(Term).where(Term.content == term)):
             return model

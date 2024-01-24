@@ -2,6 +2,7 @@ from typing import Sequence
 from uuid import UUID
 
 from domain.questions.dtos import QuestionOverviewDTO
+from domain.questions.models import Question
 from litestar import Controller, delete, get, put
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +21,7 @@ class TermController(Controller):
 
     @get("/{project_id:uuid}", return_dto=TermDTO)
     async def get_all_project(self, session: AsyncSession, project_id: UUID) -> Sequence[Term]:
-        """Gets all `Passage`s and `Term`s within a `Project`."""
+        """Gets all `Term`s and  `Passage`s within a `Project`."""
         return await AnnotationService.list(session, (Term.project_id == project_id,))
 
     @get("/{question_id:uuid}", return_dto=PassageDTO)
@@ -38,12 +39,7 @@ class TermController(Controller):
         """Removes one or more `Passage`s and `Term`s from a `Question`, returns leftover `Passage`s."""
         return await AnnotationService.remove_annotations(session, question_id, data)
 
-    @get("/{project_id:uuid}/{question_id:uuid}", return_dto=PassageDTO)
-    def get_from_question(self, session: AsyncSession, project_id: UUID, question_id: UUID) -> Sequence[PassageDTO]:
-        """Gets all `Passage`s marked within a given `Question`."""
-        ...
-
     @get("/{project_id:uuid}/{term_id:uuid}/questions", return_dto=QuestionOverviewDTO)
-    def get_from_term(self, session: AsyncSession, project_id: UUID, term_id: UUID) -> Sequence[QuestionOverviewDTO]:
+    async def get_by_term(self, session: AsyncSession, project_id: UUID, term_id: UUID) -> Sequence[Question]:
         """Gets all `Question`s within a given `Project` that share the given `Term`."""
-        ...
+        return await AnnotationService.list_questions_by_term(session, term_id, project_id)
