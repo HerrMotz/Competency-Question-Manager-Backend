@@ -163,7 +163,7 @@ class ConsolidationService:
 
         consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
-        consolidation.questions = [*set(*questions, *consolidation.questions)]
+        consolidation.questions = [*set([*questions, *consolidation.questions])]
         await session.commit()
         return await ConsolidationService.get_consolidation(session, id, project_id, options=options)
 
@@ -191,9 +191,7 @@ class ConsolidationService:
         consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
         for question in questions:
-            try:
+            if question in consolidation.questions:
                 consolidation.questions.remove(question)
-            except ValueError:
-                pass
         await session.commit()
         return await ConsolidationService.get_consolidation(session, id, project_id, options=options)
