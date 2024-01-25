@@ -28,7 +28,11 @@ class QuestionController(Controller):
     tags = ["Questions"]
     middleware = [UserGroupPermissionsMiddleware]
 
-    default_options = [selectinload(Question.author), selectinload(Question.ratings)]
+    default_options = [
+        selectinload(Question.author),
+        selectinload(Question.ratings),
+        selectinload(Question.consolidations),
+    ]
     detail_options = [
         selectinload(Question.author),
         selectinload(Question.ratings),

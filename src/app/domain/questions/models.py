@@ -19,7 +19,7 @@ class Question(UUIDAuditBase):
     question: Mapped[str]
     author_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
     group_id: Mapped[UUID] = mapped_column(ForeignKey("group.id"))
-    
+
     author: Mapped[User] = relationship(back_populates="questions")
     group: Mapped[Group] = relationship(back_populates="questions")
     ratings: Mapped[list[Rating]] = relationship(back_populates="question", cascade="all, delete-orphan")
@@ -30,3 +30,7 @@ class Question(UUIDAuditBase):
     @hybrid_property
     def aggregated_rating(self) -> int:
         return sum(map(lambda r: r.rating, self.ratings)) // len(self.ratings) if len(self.ratings) > 0 else 0
+
+    @hybrid_property
+    def no_consolidations(self) -> int:
+        return len(self.consolidations)
