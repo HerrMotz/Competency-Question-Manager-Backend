@@ -87,7 +87,9 @@ class ConsolidationService:
             questions = questions_.all()
 
         try:
-            consolidation = Consolidation(name=data.name, questions=questions, engineer_id=user_id, project_id=project_id)
+            consolidation = Consolidation(
+                name=data.name, questions=questions, engineer_id=user_id, project_id=project_id
+            )
             session.add(consolidation)
             await session.commit()
         except IntegrityError as error:
@@ -161,7 +163,7 @@ class ConsolidationService:
 
         consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
-        consolidation.questions.extend(questions)
+        consolidation.questions = [*set(*questions, *consolidation.questions)]
         await session.commit()
         return await ConsolidationService.get_consolidation(session, id, project_id, options=options)
 
@@ -188,6 +190,10 @@ class ConsolidationService:
 
         consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
-        _ = [consolidation.questions.remove(question) for question in questions]
+        for question in questions:
+            try:
+                consolidation.questions.remove(question)
+            except ValueError:
+                pass
         await session.commit()
         return await ConsolidationService.get_consolidation(session, id, project_id, options=options)
