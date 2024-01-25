@@ -4,6 +4,7 @@ from uuid import UUID
 from domain.consolidations.models import Consolidation
 from domain.groups.middleware import UserGroupPermissionsMiddleware
 from domain.groups.models import Group
+from domain.questions.services import QuestionService
 from litestar import Controller, Request, delete, get, post
 from litestar.enums import RequestEncodingType
 from litestar.exceptions import HTTPException
@@ -128,3 +129,12 @@ class QuestionController(Controller):
 
         await session.delete(question)
         return
+
+    @get(
+        "/by_project/{project_id:uuid}",
+        summary="Gets all Questions that are part of a Project",
+        return_dto=QuestionDetailDTO,
+    )
+    async def by_project(self, session: AsyncSession, project_id: UUID) -> Sequence[Question]:
+        """Gets all `Question`s that are part of a `Project`."""
+        return await QuestionService.get_questions_by_project(session, project_id, self.detail_options)
