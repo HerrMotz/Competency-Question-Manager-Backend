@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Annotated
 from uuid import UUID
 
-from advanced_alchemy.base import UUIDAuditBase
+from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from pydantic import Field
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship

@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from domain.comments.models import Comment
     from domain.questions.models import Question
     from domain.ratings.models import Rating
+    from domain.versions.models import Version
 
 
 class User(UUIDAuditBase):

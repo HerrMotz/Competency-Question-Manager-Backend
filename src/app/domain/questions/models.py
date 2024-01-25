@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from distutils.version import Version
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 from uuid import UUID
 
+
 from litestar.contrib.sqlalchemy.base import UUIDAuditBase
-from sqlalchemy import Column, ForeignKey, Table
+from sqlalchemy import ForeignKey
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,12 +15,12 @@ if TYPE_CHECKING:
     from domain.groups.models import Group
     from domain.ratings.models import Rating
     from domain.comments.models import Comment
+    from domain.versions.models import Version
 
 
 class Question(UUIDAuditBase):
+    version_number: Mapped[int]
     question: Mapped[str]
-    version: Mapped[int]
-    is_current_version: Mapped[bool]
     author_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
     group_id: Mapped[UUID] = mapped_column(ForeignKey("group.id"))
 
@@ -31,7 +31,7 @@ class Question(UUIDAuditBase):
     consolidations: Mapped[list[Consolidation]] = relationship(
         secondary="consolidated_questions", back_populates="questions"
     )
-    versions: Mapped[List[Version]] = relationship(secondary="version_questions", back_populates="questions")
+    versions: Mapped[list[Version]] = relationship(back_populates="question", cascade="all, delete-orphan")
 
     @hybrid_property
     def aggregated_rating(self) -> int:

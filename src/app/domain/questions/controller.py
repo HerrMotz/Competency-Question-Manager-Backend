@@ -23,6 +23,8 @@ from .dtos import (
 from .models import Question
 from ..accounts.models import User
 from ..comments.models import Comment
+from ..ratings.models import Rating
+from ..versions.models import Version
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
@@ -36,7 +38,7 @@ class QuestionController(Controller):
     default_options = [selectinload(Question.author), selectinload(Question.ratings)]
     detail_options = [
         selectinload(Question.author),
-        selectinload(Question.ratings),
+        selectinload(Question.ratings).options(selectinload(Rating.author)),
         selectinload(Question.consolidations).options(selectinload(Consolidation.questions)),
         selectinload(Question.group).options(selectinload(Group.project)),
         selectinload(Question.versions),
@@ -65,8 +67,7 @@ class QuestionController(Controller):
                 question=data.question,
                 author_id=request.user.id,
                 group_id=group_id,
-                version=1,
-                is_current_version=True,
+                version_number=1,
             )
             session.add(question)
             await session.commit()
@@ -87,21 +88,13 @@ class QuestionController(Controller):
         :param session: AsyncSession object used to execute the database query and retrieve questions.
         :return: A list of QuestionDTO objects representing the retrieved questions.
         """
-        return (
-            await session.scalars(
-                select(Question).where(Question.is_current_version == True).options(*self.default_options)
-            )
-        ).all()
+        return (await session.scalars(select(Question).options(*self.default_options))).all()
 
     @get("/{group_id:uuid}", return_dto=QuestionOverviewDTO, status_code=HTTP_200_OK)
     async def get_group_questions(self, session: AsyncSession, group_id: UUID) -> Sequence[Question]:
         """Gets all `Question`s belonging to a given `Group`."""
         return (
-            await session.scalars(
-                select(Question)
-                .where(Question.group_id == group_id, Question.is_current_version == True)
-                .options(*self.default_options)
-            )
+            await session.scalars(select(Question).where(Question.group_id == group_id).options(*self.default_options))
         ).all()
 
     @get("/{group_id:uuid}/{question_id:uuid}", return_dto=QuestionDetailDTO, status_code=HTTP_200_OK)
@@ -109,6 +102,7 @@ class QuestionController(Controller):
         """
         Retrieves a question by its ID.
 
+        :param group_id:
         :param session: An `AsyncSession` object representing the database session.
         :param question_id: A `UUID` object representing the ID of the question to retrieve.
         :return: A `QuestionDTO` object containing the retrieved question.
@@ -137,26 +131,26 @@ class QuestionController(Controller):
         session: AsyncSession,
         data: JsonEncoded[QuestionCreate],
         question_id: UUID,
-        group_id: UUID,
         request: Request[User, Any, Any],
     ) -> Question:
         question = await session.scalar(select(Question).where(Question.id == question_id))
-        question.is_current_version = False
-        # TODO add version relation
 
         try:
-            updated_question = Question(
-                question=data.question,
-                author_id=request.user.id,
-                group_id=group_id,
-                version=question.version + 1,
-                is_current_version=True
+            version = Version(
+                question_string=question.question,
+                version_number=question.version_number,
+                question_id=question.id,
             )
-            session.add(updated_question)
+            session.add(version)
+            question.author_id = request.user.id
+            question.question = data.question
+            question.version_number = question.version_number+1
+            session.add(question)
             await session.commit()
-            await session.refresh(updated_question)
+            await session.refresh(question)
+            await session.refresh(version)
             updated_question = await session.scalar(
-                select(Question).where(Question.id == updated_question.id).options(*self.detail_options)
+                select(Question).where(Question.id == question.id).options(*self.detail_options)
             )
             if updated_question:
                 return updated_question
