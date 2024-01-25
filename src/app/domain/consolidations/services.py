@@ -162,7 +162,8 @@ class ConsolidationService:
         consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
         consolidation.questions.extend(questions)
-        return consolidation
+        await session.commit()
+        return await ConsolidationService.get_consolidation(session, id, project_id, options=options)
 
     @staticmethod
     async def remove_questions(
@@ -188,4 +189,5 @@ class ConsolidationService:
         consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
         _ = [consolidation.questions.remove(question) for question in questions]
-        return consolidation
+        await session.commit()
+        return await ConsolidationService.get_consolidation(session, id, project_id, options=options)
