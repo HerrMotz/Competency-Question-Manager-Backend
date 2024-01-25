@@ -9,7 +9,7 @@ from .models import Rating
 
 
 class RatingService:
-    async def set_rating(self, session: AsyncSession, rating: RatingSetDTO, user_id: UUID) -> RatingSetDTO:
+    async def set_rating(self, session: AsyncSession, rating: RatingSetDTO, author_id: UUID) -> RatingSetDTO:
         """
         Set the ratings for a specific model and save it to the database.
 
@@ -20,12 +20,12 @@ class RatingService:
         :rtype: RatingSetDTO
         """
         if rating_from_db := await session.scalar(
-            select(Rating).where(Rating.author_id == user_id).where(Rating.question_id == rating.question_id)
+            select(Rating).where(Rating.author_id == author_id).where(Rating.question_id == rating.question_id)
         ):
             rating_from_db.rating = rating.rating
             return RatingSetDTO.model_validate(rating_from_db)
         else:
-            new_rating = Rating(id=uuid4(), rating=rating.rating, user_id=user_id, question_id=rating.question_id)
+            new_rating = Rating(id=uuid4(), rating=rating.rating, author_id=author_id, question_id=rating.question_id)
             session.add(new_rating)
             return RatingSetDTO.model_validate(new_rating)
 
@@ -55,7 +55,7 @@ class RatingService:
             return RatingGetDTO(
                 rating=rating.rating,
                 question_id=rating.question_id,
-                user_id=rating.author_id,
+                author_id=rating.author_id,
                 user_name=rating.author.name,
             )
 
