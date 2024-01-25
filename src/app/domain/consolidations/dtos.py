@@ -20,6 +20,7 @@ class ConsolidationDTO(SQLAlchemyDTO[Consolidation]):
             "engineer.name",
             "engineer.email",
             "questions.0.id",
+            "questions.0.group_id",
             "questions.0.question",
             "questions.0.aggregated_rating",
             "questions.0.author.id",

@@ -63,6 +63,10 @@ class QuestionController(Controller):
         :return: The created question data.
         """
         try:
+            statement = select(Group).where(Group.id == group_id)
+            if not await session.scalar(statement):
+                raise HTTPException(status_code=404, detail="Group not found.")
+
             question = Question(
                 question=data.question,
                 author_id=request.user.id,

@@ -30,7 +30,7 @@ ProjectEngineers = Table(
 
 class Project(UUIDAuditBase):
     name: Mapped[str] = mapped_column()
-    description: Mapped[str] = mapped_column()
+    description: Mapped[str | None] = mapped_column(default=None)
 
     managers: Mapped[list[User]] = relationship(secondary="project_managers", back_populates="managed_projects")
     engineers: Mapped[list[User]] = relationship(secondary="project_engineers", back_populates="engineered_projects")
@@ -48,7 +48,7 @@ class Project(UUIDAuditBase):
     @hybrid_property
     def no_groups(self) -> int:
         return len(self.groups)
-    
+
     @hybrid_property
     def no_consolidations(self) -> int:
         return len(self.consolidations)
