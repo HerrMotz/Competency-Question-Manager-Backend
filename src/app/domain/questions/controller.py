@@ -1,5 +1,6 @@
 from typing import Annotated, Any, Sequence, TypeVar
 from uuid import UUID
+from domain.rating.models import Rating
 
 from domain.consolidations.models import Consolidation
 from domain.groups.middleware import UserGroupPermissionsMiddleware
@@ -36,7 +37,7 @@ class QuestionController(Controller):
     ]
     detail_options = [
         selectinload(Question.author),
-        selectinload(Question.ratings),
+        selectinload(Question.ratings).options(selectinload(Rating.user)),
         selectinload(Question.consolidations).options(selectinload(Consolidation.questions)),
         selectinload(Question.group).options(selectinload(Group.project)),
     ]
