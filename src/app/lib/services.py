@@ -25,42 +25,37 @@ class MockDataService:
     mock_password = b"\xef\xb9\tG\xff\x997\x88\x82\x95\x13\x1c(\x98\x81\x0e\xe9\x1a\xb4\xf0\x97\x11\x1c\x88\xb7\xc7\xfc\xe6l\xfa!\x835/\x95\xf9$\x8e.\xc1\xe1[z\xb8\xa7|\x81\xdc-\x1bir\x80I\x08|\xa8\xa6=d\xef\xe6w\x17a\x9c\xf8\xb5\xa1\xa5\x9dEd\xd0Z\x03mb\xc7\t\x15j\x80\xfc\xbaK.\xe9\xe5\xca\xe7xu\xfb\xd8z\xd3\xb6\xed\x04\xbe\x08u\xab\xae[\xc9\x9b3\xd4h\xbed`l7H\xb1\xe77*,e\x91+?\x8c\x99"
     mock_salt = b"i\xf1\xc7g\xf9\xba\x16\xd4\x00V\xbe!\xcf\x1e3\xfb[\x98\x0e\x9a\x16A\x0e\xb9'B\x89\x06Y\x97Y\xec\x1b%\xd3\xef\xabR\x16\xd3M4\xc8\x18\xfb4\xaa\xf6\x93*\xf5\x0b\x9f\xcby\xbe\xd2\x9b\x17\x83g\x80\xfa\x80\xd2\x94\xa1\x05\xcb\x03\x11\x85\xe9\xfd\x94\xb6\xea\xe7N7\x1e\x10SC\xc8\xa3\xc9\x01\xbd\x8b\xa3\xd9\xc8o*\xd7\xbd\xb1\x91\x17\xba\xe7\x10b\xd2g\xcb7G\x15%\xden\xdd\x9d\xa7:\x14w\xa8\\\xe0v,\xdb\xcf\xc3L"
 
-    mock_questions = [
-        Question(
-            question="How is it?",
+    mock_versions = [
+        Version(
+            question_string="How is it?",
             id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
-            version=1,
-            is_current_version=False,
-            author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
-            group_id=UUID("b0488a1e-3768-4d34-8c90-f24f1f9036a3"),
-        ),
+            version_number=1,
+            question_id=UUID("2de6c0c8-3565-4c5a-bc85-3b5971e0e452"),
+        )
+    ]
+    mock_questions = [
         Question(
             question="How is it really?",
             id=UUID("2de6c0c8-3565-4c5a-bc85-3b5971e0e452"),
-            version=2,
-            is_current_version=True,
+            version_number=2,
             author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
             group_id=UUID("b0488a1e-3768-4d34-8c90-f24f1f9036a3"),
         ),
         Question(
             question="Hot take: what if the earth is actually a cube?",
             id=UUID("92bcacac-c5bf-4fe3-a12a-d52d5f3ac1f1"),
-            version=1,
-            is_current_version=True,
+            version_number=1,
             author_id=UUID("e0ca0b85-2960-4f47-8a1c-1acda6d13b87"),
             group_id=UUID("a825cd37-f637-4853-bc73-97a2b01f18e7"),
         ),
         Question(
             question="Maps are square right?",
             id=UUID("968b9a07-463d-4e0d-a2ea-ba39c06e830d"),
-            version=1,
-            is_current_version=True,
+            version_number=1,
             author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
             group_id=UUID("a825cd37-f637-4853-bc73-97a2b01f18e7"),
         ),
     ]
-
-    mock_versions = [Version(id=UUID("44b84299-e681-48a6-a45e-49e7e5ab29e1"), questions=mock_questions[:2])]
 
     mock_users = [
         User(
@@ -148,12 +143,12 @@ class MockDataService:
         Rating(
             rating=4,
             author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
-            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+            question_id=UUID("2de6c0c8-3565-4c5a-bc85-3b5971e0e452"),
         ),
         Rating(
             rating=3,
             author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
-            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+            question_id=UUID("2de6c0c8-3565-4c5a-bc85-3b5971e0e452"),
         ),
     ]
 
@@ -161,21 +156,28 @@ class MockDataService:
         Comment(
             comment="Das ist eine sehr gute Frage!",
             author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
-            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+            question_id=UUID("92bcacac-c5bf-4fe3-a12a-d52d5f3ac1f1"),
         ),
         Comment(
             comment="Ja wirklich gut!",
             author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
-            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+            question_id=UUID("92bcacac-c5bf-4fe3-a12a-d52d5f3ac1f1"),
         ),
         Comment(
             comment="Und auch ein sehr spannender Kommentar!",
             author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
-            question_id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
+            question_id=UUID("92bcacac-c5bf-4fe3-a12a-d52d5f3ac1f1"),
         ),
     ]
 
-    mock_data: list[DeclarativeBase] = [*mock_users, *mock_questions, *mock_ratings, *mock_projects, *mock_versions]
+    mock_data: list[DeclarativeBase] = [
+        *mock_users,
+        *mock_questions,
+        *mock_ratings,
+        *mock_projects,
+        *mock_versions,
+        *mock_comments,
+    ]
 
     async def _add_mock_model(self, model: DeclarativeBase) -> None:
         async with session_maker() as session:
