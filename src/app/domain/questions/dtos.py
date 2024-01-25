@@ -18,7 +18,8 @@ class QuestionOverviewDTO(SQLAlchemyDTO[Question]):
             "author.id",
             "author.name",
             "no_consolidations",
-        }
+        },
+        rename_strategy="camel",
     )
 
 
