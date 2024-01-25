@@ -4,6 +4,7 @@ from uuid import UUID
 from domain.consolidations.models import Consolidation
 from domain.groups.middleware import UserGroupPermissionsMiddleware
 from domain.groups.models import Group
+from domain.projects.middleware import UserProjectPermissionsMiddleware
 from domain.questions.services import QuestionService
 from litestar import Controller, Request, delete, get, post
 from litestar.enums import RequestEncodingType
@@ -26,7 +27,7 @@ JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
 class QuestionController(Controller):
     path = "/questions/"
     tags = ["Questions"]
-    middleware = [UserGroupPermissionsMiddleware]
+    middleware = [UserGroupPermissionsMiddleware, UserProjectPermissionsMiddleware]
 
     default_options = [
         selectinload(Question.author),
