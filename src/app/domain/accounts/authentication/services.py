@@ -3,7 +3,9 @@ import os
 import re
 from dataclasses import dataclass, field
 from typing import NamedTuple
+
 from litestar.di import Provide
+
 from .exceptions import InvalidPasswordFormatException, InvalidPasswordLengthException
 
 PasswordHash = NamedTuple("PasswordHash", [("hash", bytes), ("salt", bytes)])

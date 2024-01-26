@@ -5,9 +5,9 @@ from uuid import UUID
 
 from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import Column, ForeignKey, Table
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.schema import ForeignKey
-from sqlalchemy.ext.hybrid import hybrid_property
 
 if TYPE_CHECKING:
     from domain.accounts.models import User
