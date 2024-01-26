@@ -7,11 +7,13 @@ from sqlalchemy import LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
+    from domain.consolidations.models import Consolidation
     from domain.groups.models import Group
     from domain.projects.models import Project
-    from domain.consolidations.models import Consolidation
+    from domain.comments.models import Comment
     from domain.questions.models import Question
-    from domain.rating.models import Rating
+    from domain.ratings.models import Rating
+    from domain.versions.models import Version
 
 
 class User(UUIDAuditBase):
@@ -23,8 +25,11 @@ class User(UUIDAuditBase):
     is_verified: Mapped[bool]
 
     managed_projects: Mapped[list[Project]] = relationship(secondary="project_managers", back_populates="managers")
-    engineered_projects: Mapped[list[Project]] = relationship(secondary="project_engineers", back_populates="engineers")
+    engineered_projects: Mapped[list[Project]] = relationship(
+        secondary="project_engineers", back_populates="engineers"
+    )
     joined_groups: Mapped[list[Group]] = relationship(secondary="group_members", back_populates="members")
     consolidations: Mapped[list[Consolidation]] = relationship(back_populates="engineer")
     questions: Mapped[list[Question]] = relationship(back_populates="author")
-    ratings: Mapped[list[Rating]] = relationship(back_populates="user")
+    ratings: Mapped[list[Rating]] = relationship(back_populates="author")
+    comments: Mapped[list[Comment]] = relationship(back_populates="author")

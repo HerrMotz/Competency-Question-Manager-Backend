@@ -1,6 +1,9 @@
 import smtplib
 import ssl
-from contextlib import _GeneratorContextManager, contextmanager  # pyright: ignore[reportPrivateUsage]
+from contextlib import (  # pyright: ignore[reportPrivateUsage]
+    _GeneratorContextManager,
+    contextmanager,
+)
 from dataclasses import dataclass
 from email.mime.text import MIMEText
 from typing import Generator, Iterable, Literal, NamedTuple

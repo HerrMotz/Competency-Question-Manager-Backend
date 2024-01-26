@@ -8,11 +8,12 @@ sql_plugin = AsyncSqlPlugin()
 from domain.accounts.authentication.middleware import AuthenticationMiddleware
 from domain.accounts.authentication.services import EncryptionService
 from domain.accounts.controllers import UserController
+from domain.comments.controller import CommentController
 from domain.consolidations.controllers import ConsolidationController
 from domain.groups.controllers import GroupController
 from domain.projects.controllers import ProjectController
 from domain.questions.controller import QuestionController
-from domain.rating.controller import RatingController
+from domain.ratings.controller import RatingController
 from lib.services import MockDataService
 from litestar import Litestar
 from litestar.config.cors import CORSConfig
@@ -34,6 +35,7 @@ app = Litestar(
         ProjectController,
         GroupController,
         ConsolidationController,
+        CommentController,
     ],
     cors_config=cors_config,
     openapi_config=openapi_config,

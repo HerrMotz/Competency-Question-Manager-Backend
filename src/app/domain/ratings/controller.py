@@ -21,7 +21,7 @@ class RatingController(Controller):
         return await self.service.set_rating(
             session=session,
             rating=data,
-            user_id=request.user.id
+            author_id=request.user.id
         )
 
     @get(path="/{question_id:uuid}/user/{user_id:uuid}")
