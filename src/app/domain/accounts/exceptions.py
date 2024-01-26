@@ -1,7 +1,11 @@
 from uuid import UUID
 
 from litestar.exceptions import HTTPException, NotAuthorizedException
-from litestar.status_codes import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
+from litestar.status_codes import (
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_404_NOT_FOUND,
+)
 
 
 class UserNotFoundException(HTTPException):

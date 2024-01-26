@@ -3,7 +3,10 @@ from typing import Any
 from litestar.connection import ASGIConnection
 from litestar.handlers.base import BaseRouteHandler
 
-from .exceptions import SystemAdministratorRequiredException, VerificationRequiredException
+from .exceptions import (
+    SystemAdministratorRequiredException,
+    VerificationRequiredException,
+)
 from .models import User
 
 

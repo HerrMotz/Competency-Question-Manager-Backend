@@ -21,7 +21,6 @@ from ..exceptions import (
     UserNotFoundException,
     VerificationRequiredException,
 )
-
 from ..guards import system_admin_guard
 from ..services import UserService
 

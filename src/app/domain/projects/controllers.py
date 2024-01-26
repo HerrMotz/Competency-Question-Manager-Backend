@@ -20,9 +20,9 @@ from .dtos import (
     ProjectUsersAddDTO,
     ProjectUsersRemoveDTO,
 )
+from .middleware import UserProjectPermissionsMiddleware
 from .models import Project
 from .services import ProjectService
-from .middleware import UserProjectPermissionsMiddleware
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
