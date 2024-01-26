@@ -172,6 +172,18 @@ class ProjectService:
         return True if result.rowcount > 0 else False
 
     @staticmethod
+    async def my_projects(
+        session: AsyncSession,
+        user_id: UUID,
+        options: Iterable[ExecutableOption] | None = None,
+    ) -> Sequence[Project]:
+        """Returns all `Project`s a given `User` is a member of."""
+        options = [] if not options else options
+        statement = select(Project).join(Group).filter(Group.members.any(User.id == user_id))
+        statement = statement.options(*options)
+        return (await session.scalars(statement)).all()
+
+    @staticmethod
     async def is_manager(session: AsyncSession, id: UUID, user_id: UUID) -> bool:
         """Checks wether a given `User` is a manager of the given `Project`."""
         statement = select(Project).where(Project.id == id)

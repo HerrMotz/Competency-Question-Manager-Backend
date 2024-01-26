@@ -1,11 +1,13 @@
-from typing import Annotated, Sequence, TypeVar
+from typing import Annotated, Any, Sequence, TypeVar
 from uuid import UUID
 
 from domain.accounts.authentication.services import EncryptionService
+from domain.accounts.models import User
 from domain.groups.models import Group
 from domain.projects.middleware import UserProjectPermissionsMiddleware
 from domain.questions.models import Question
 from litestar import Controller, delete, get, post, put
+from litestar.connection.request import Request
 from litestar.enums import RequestEncodingType
 from litestar.exceptions import HTTPException
 from litestar.params import Body
@@ -109,3 +111,18 @@ class GroupController(Controller):
     ) -> Group:
         """Removes members from a `Group` under a given `Project`."""
         return await GroupService.remove_members(session, group_id, project_id, data)
+
+    @get("/my_groups", summary="Gets all Groups you are a member of", return_dto=GroupDTO)
+    async def my_groups(self, request: Request[User, Any, Any], session: AsyncSession) -> Sequence[Group]:
+        """Gets all `Group`s you are a member of."""
+        return await GroupService.my_groups(session, request.user.id, options=self.default_options)
+
+    @get("/my_groups/{project_id:uuid}", summary="Gets all Groups you are a member of", return_dto=GroupDTO)
+    async def my_groups_by_projects(
+        self,
+        request: Request[User, Any, Any],
+        session: AsyncSession,
+        project_id: UUID,
+    ) -> Sequence[Group]:
+        """Gets all `Group`s you are a member of, filtered by a `Project`."""
+        return await GroupService.my_groups(session, request.user.id, project_id, self.default_options)

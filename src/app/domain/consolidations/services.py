@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Iterable, Sequence
 from uuid import UUID
 
@@ -159,11 +160,12 @@ class ConsolidationService:
         :return: The updated `Consolidation`.
         """
         if not data.ids:
-            raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
+            raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="No Ids were given.")
 
         consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
-        consolidation.questions = [*set([*questions, *consolidation.questions])]
+
+        consolidation.questions = [*set(chain(consolidation.questions, questions))]
         await session.commit()
         return await ConsolidationService.get_consolidation(session, id, project_id, options=options)
 
@@ -186,7 +188,7 @@ class ConsolidationService:
         :return: The updated `Consolidation`.
         """
         if not data.ids:
-            raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
+            raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="No Ids were given.")
 
         consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))

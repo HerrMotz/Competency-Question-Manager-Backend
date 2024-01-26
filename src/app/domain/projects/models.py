@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from domain.accounts.models import User
     from domain.consolidations.models import Consolidation
     from domain.groups.models import Group
+
 ProjectManagers = Table(
     "project_managers",
     UUIDAuditBase.metadata,

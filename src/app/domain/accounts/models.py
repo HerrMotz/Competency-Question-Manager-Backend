@@ -7,13 +7,12 @@ from sqlalchemy import LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
+    from domain.comments.models import Comment
     from domain.consolidations.models import Consolidation
     from domain.groups.models import Group
     from domain.projects.models import Project
-    from domain.comments.models import Comment
     from domain.questions.models import Question
     from domain.ratings.models import Rating
-    from domain.versions.models import Version
 
 
 class User(UUIDAuditBase):

@@ -1,9 +1,15 @@
 from typing import Annotated, Any, Sequence, TypeVar
 from uuid import UUID
 
+from domain.accounts.models import User
+from domain.comments.models import Comment
 from domain.consolidations.models import Consolidation
 from domain.groups.middleware import UserGroupPermissionsMiddleware
 from domain.groups.models import Group
+from domain.projects.middleware import UserProjectPermissionsMiddleware
+from domain.questions.services import QuestionService
+from domain.ratings.models import Rating
+from domain.versions.models import Version
 from litestar import Controller, Request, delete, get, post, put
 from litestar.enums import RequestEncodingType
 from litestar.exceptions import HTTPException
@@ -14,17 +20,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from .dtos import (
-    QuestionCreate,
-    QuestionCreateDTO,
-    QuestionDetailDTO,
-    QuestionOverviewDTO,
-)
+from .dtos import QuestionCreate, QuestionCreateDTO, QuestionDetailDTO, QuestionOverviewDTO
 from .models import Question
-from ..accounts.models import User
-from ..comments.models import Comment
-from ..ratings.models import Rating
-from ..versions.models import Version
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
@@ -33,9 +30,13 @@ JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
 class QuestionController(Controller):
     path = "/questions/"
     tags = ["Questions"]
-    middleware = [UserGroupPermissionsMiddleware]
+    middleware = [UserGroupPermissionsMiddleware, UserProjectPermissionsMiddleware]
 
-    default_options = [selectinload(Question.author), selectinload(Question.ratings)]
+    default_options = [
+        selectinload(Question.author),
+        selectinload(Question.ratings),
+        selectinload(Question.consolidations),
+    ]
     detail_options = [
         selectinload(Question.author),
         selectinload(Question.ratings).options(selectinload(Rating.author)),
@@ -139,6 +140,9 @@ class QuestionController(Controller):
     ) -> Question:
         question = await session.scalar(select(Question).where(Question.id == question_id))
 
+        if not question:
+            raise HTTPException(status_code=404, detail="Question not found.")
+
         try:
             version = Version(
                 question_string=question.question,
@@ -148,18 +152,19 @@ class QuestionController(Controller):
             session.add(version)
             question.author_id = request.user.id
             question.question = data.question
-            question.version_number = question.version_number+1
+            question.version_number = question.version_number + 1
             session.add(question)
             await session.commit()
             await session.refresh(question)
             await session.refresh(version)
-            updated_question = await session.scalar(
+
+            if updated_question := await session.scalar(
                 select(Question).where(Question.id == question.id).options(*self.detail_options)
-            )
-            if updated_question:
+            ):
                 return updated_question
             else:
                 raise HTTPException(status_code=404, detail="Question not found.")
+
         except IntegrityError:
             raise HTTPException(status_code=400, detail="Integrity violated.")
 
@@ -184,3 +189,12 @@ class QuestionController(Controller):
 
         await session.delete(question)
         return
+
+    @get(
+        "/by_project/{project_id:uuid}",
+        summary="Gets all Questions that are part of a Project",
+        return_dto=QuestionDetailDTO,
+    )
+    async def by_project(self, session: AsyncSession, project_id: UUID) -> Sequence[Question]:
+        """Gets all `Question`s that are part of a `Project`."""
+        return await QuestionService.get_questions_by_project(session, project_id, self.detail_options)
