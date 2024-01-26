@@ -37,7 +37,7 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "consolidations.0.id",
             "consolidations.0.name",
             "consolidations.0.no_questions",
-            "consolidations.0.project_id"
+            "consolidations.0.project_id",
             "versions.0.question_string",
             "versions.0.version_number"
         },
