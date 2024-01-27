@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-
 from litestar.contrib.sqlalchemy.base import UUIDAuditBase
 from sqlalchemy import ForeignKey
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -11,10 +10,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from domain.accounts.models import User
+    from domain.comments.models import Comment
     from domain.consolidations.models import Consolidation
     from domain.groups.models import Group
     from domain.ratings.models import Rating
-    from domain.comments.models import Comment
     from domain.versions.models import Version
 
 
