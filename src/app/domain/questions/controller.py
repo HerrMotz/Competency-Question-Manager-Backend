@@ -20,7 +20,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from .dtos import QuestionCreate, QuestionCreateDTO, QuestionDetailDTO, QuestionOverviewDTO
+from .dtos import (
+    QuestionCreate,
+    QuestionCreateDTO,
+    QuestionDetailDTO,
+    QuestionOverviewDTO,
+)
 from .models import Question
 
 T = TypeVar("T")
