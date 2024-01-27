@@ -1,63 +1,57 @@
 from uuid import UUID, uuid4
 
-from sqlalchemy import select, update
+from litestar.exceptions import HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from .dtos import RatingGetDTO, RatingSetDTO
+from .dtos import RatingSet
 from .models import Rating
 
 
 class RatingService:
-    async def set_rating(self, session: AsyncSession, rating: RatingSetDTO, author_id: UUID) -> RatingSetDTO:
+    async def set_rating(self, session: AsyncSession, data: RatingSet, author_id: UUID) -> Rating:
         """
         Set the ratings for a specific model and save it to the database.
 
         :param user_id:
-        :param rating: RatingSetDTO
+        :param data: RatingSet
         :param session: AsyncSession
         :return: The saved ratings.
-        :rtype: RatingSetDTO
+        :rtype: RatingSet
         """
-        if rating_from_db := await session.scalar(
-            select(Rating).where(Rating.author_id == author_id).where(Rating.question_id == rating.question_id)
+        if rating := await session.scalar(
+            select(Rating)
+            .where(Rating.author_id == author_id)
+            .where(Rating.question_id == data.question_id)
+            .options(selectinload(Rating.author))
         ):
-            rating_from_db.rating = rating.rating
-            return RatingSetDTO.model_validate(rating_from_db)
+            rating.rating = data.rating
+            session.add(rating)
+            await session.commit()
+            await session.refresh(rating)
+
         else:
-            new_rating = Rating(id=uuid4(), rating=rating.rating, author_id=author_id, question_id=rating.question_id)
-            session.add(new_rating)
-            return RatingSetDTO.model_validate(new_rating)
+            rating = Rating(id=uuid4(), rating=data.rating, author_id=author_id, question_id=data.question_id)
+            session.add(rating)
+            await session.commit()
+            await session.refresh(rating)
+            rating = await session.scalar(
+                select(Rating)
+                .where(Rating.author_id == author_id)
+                .where(Rating.question_id == data.question_id)
+                .options(selectinload(Rating.author))
+            )
 
-    async def get_ratings(self, session: AsyncSession, question_id: UUID) -> list[RatingGetDTO]:
-        """
-        Get the list of ratings for a given question ID.
+        return rating
 
-        :param session:
-        :param question_id: The unique ID of the question.
-        :type question_id: UUID
-        :return: The list of ratings for the question.
-        :rtype: list[RatingGetDTO]
-        """
-        ratings = await session.scalars(
-            select(Rating).where(Rating.question_id == question_id).options(selectinload(Rating.author))
-        )
-        return [RatingGetDTO.model_copy(rating, update={"user_name": rating.author.name}) for rating in ratings]
-
-    async def get_rating(self, session: AsyncSession, user_id: UUID, question_id: UUID) -> RatingGetDTO | None:
-        rating = await session.scalar(
+    async def get_rating(self, session: AsyncSession, user_id: UUID, question_id: UUID) -> Rating:
+        if rating := await session.scalar(
             select(Rating)
             .where(Rating.author_id == user_id)
             .where(Rating.question_id == question_id)
             .options(selectinload(Rating.author))
-        )
-        if rating:
-            return RatingGetDTO(
-                rating=rating.rating,
-                question_id=rating.question_id,
-                author_id=rating.author_id,
-                user_name=rating.author.name,
-            )
-
+        ):
+            return rating
         else:
-            return None
+            raise HTTPException(status_code=404, detail="Rating not found.")
