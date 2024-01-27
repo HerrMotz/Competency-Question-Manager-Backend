@@ -80,4 +80,4 @@ class ProjectUsersRemoveDTO(BaseModel):
 
 class ProjectUpdateDTO(BaseModel):
     name: NonEmptyString | None
-    description: NonEmptyString | None
+    description: NonEmptyString | None = None

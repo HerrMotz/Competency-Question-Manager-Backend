@@ -139,6 +139,20 @@ class GroupService:
         return True if result.rowcount > 0 else False
 
     @staticmethod
+    async def my_groups(
+        session: AsyncSession,
+        user_id: UUID,
+        project_id: UUID | None = None,
+        options: Iterable[ExecutableOption] | None = None,
+    ) -> Sequence[Group]:
+        """Returns all `Groups`s a given `User` is a member of."""
+        options = [] if not options else options
+        statement = select(Group) if not project_id else select(Group).where(Group.project_id == project_id)
+        statement = statement.filter(Group.members.any(User.id == user_id))
+        statement = statement.options(*options)
+        return (await session.scalars(statement)).all()
+
+    @staticmethod
     async def is_member(session: AsyncSession, id: UUID, user_id: UUID) -> bool:
         """Checks wether a given `User` is a member of the given `Group`, (Internal use only)."""
         statement = select(Group).where(Group.id == id)

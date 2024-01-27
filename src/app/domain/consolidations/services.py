@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Iterable, Sequence
 from uuid import UUID
 
@@ -87,7 +88,9 @@ class ConsolidationService:
             questions = questions_.all()
 
         try:
-            consolidation = Consolidation(name=data.name, questions=questions, engineer_id=user_id, project_id=project_id)
+            consolidation = Consolidation(
+                name=data.name, questions=questions, engineer_id=user_id, project_id=project_id
+            )
             session.add(consolidation)
             await session.commit()
         except IntegrityError as error:
@@ -157,12 +160,14 @@ class ConsolidationService:
         :return: The updated `Consolidation`.
         """
         if not data.ids:
-            raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
+            raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="No Ids were given.")
 
         consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
-        consolidation.questions.extend(questions)
-        return consolidation
+
+        consolidation.questions = [*set(chain(consolidation.questions, questions))]
+        await session.commit()
+        return await ConsolidationService.get_consolidation(session, id, project_id, options=options)
 
     @staticmethod
     async def remove_questions(
@@ -183,9 +188,12 @@ class ConsolidationService:
         :return: The updated `Consolidation`.
         """
         if not data.ids:
-            raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
+            raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="No Ids were given.")
 
         consolidation = await ConsolidationService.get_consolidation(session, id, project_id, options=options)
         questions = await session.scalars(select(Question).where(Question.id.in_(data.ids)))
-        _ = [consolidation.questions.remove(question) for question in questions]
-        return consolidation
+        for question in questions:
+            if question in consolidation.questions:
+                consolidation.questions.remove(question)
+        await session.commit()
+        return await ConsolidationService.get_consolidation(session, id, project_id, options=options)

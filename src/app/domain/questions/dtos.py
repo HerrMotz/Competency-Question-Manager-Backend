@@ -9,7 +9,18 @@ from .models import Question
 
 
 class QuestionOverviewDTO(SQLAlchemyDTO[Question]):
-    config = SQLAlchemyDTOConfig(include={"id", "group_id", "question", "rating", "author.id", "author.name"})
+    config = SQLAlchemyDTOConfig(
+        include={
+            "id",
+            "group_id",
+            "question",
+            "rating",
+            "author.id",
+            "author.name",
+            "no_consolidations",
+        },
+        rename_strategy="camel",
+    )
 
 
 class QuestionDetailDTO(SQLAlchemyDTO[Question]):
@@ -19,9 +30,10 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "id",
             "question",
             "group_id",
-            "ratings.rating",
-            "ratings.user.id",
-            "ratings.user.name",
+            "version_number",
+            "ratings.0.rating",
+            "ratings.0.author.id",
+            "ratings.0.author.name",
             "aggregated_rating",
             "author.id",
             "author.name",
@@ -29,10 +41,17 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "group.name",
             "group.project.id",
             "group.project.name",
+            "comments.0.author.id",
+            "comments.0.author.name",
+            "comments.0.comment",
+            "comments.0.created_at",
+            "no_consolidations",
             "consolidations.0.id",
             "consolidations.0.name",
             "consolidations.0.no_questions",
             "consolidations.0.project_id",
+            "versions.0.question_string",
+            "versions.0.version_number"
         },
         rename_strategy="camel",
     )

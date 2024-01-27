@@ -1,10 +1,12 @@
-from typing import Annotated, Sequence, TypeVar
+from typing import Annotated, Any, Sequence, TypeVar
 from uuid import UUID
 
 from domain.accounts.authentication.services import EncryptionService
+from domain.accounts.models import User
 from domain.consolidations.models import Consolidation
 from domain.groups.models import Group
 from litestar import Controller, delete, get, post, put
+from litestar.connection.request import Request
 from litestar.enums import RequestEncodingType
 from litestar.exceptions import HTTPException
 from litestar.params import Body
@@ -20,9 +22,9 @@ from .dtos import (
     ProjectUsersAddDTO,
     ProjectUsersRemoveDTO,
 )
+from .middleware import UserProjectPermissionsMiddleware
 from .models import Project
 from .services import ProjectService
-from .middleware import UserProjectPermissionsMiddleware
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
@@ -115,3 +117,8 @@ class ProjectController(Controller):
         data: JsonEncoded[ProjectUsersRemoveDTO],
     ) -> Project:
         return await ProjectService.remove_engineers(session, project_id, data)
+
+    @get("/my_projects", summary="Gets all Projects you are a part of", return_dto=ProjectDTO)
+    async def my_projects(self, request: Request[User, Any, Any], session: AsyncSession) -> Sequence[Project]:
+        """Get all projects you are part of, meaning you are a member of any `Group` within one of these `Project`s."""
+        return await ProjectService.my_projects(session, request.user.id, self.default_options)
