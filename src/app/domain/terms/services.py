@@ -74,6 +74,7 @@ class AnnotationService:
         passage: str,
         options: Iterable[ExecutableOption] | None = None,
     ) -> Passage:
+        options = [] if not options else options
         if model := await session.scalar(select(Passage).where(Passage.content == passage, Passage.term_id == term_id)):
             return model
 

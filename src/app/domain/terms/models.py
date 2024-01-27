@@ -36,7 +36,7 @@ class Passage(UUIDAuditBase):
 
     content: Mapped[str] = mapped_column()
 
-    author_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+    #author_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
     term_id: Mapped[UUID] = mapped_column(ForeignKey("term.id"))
 
     term: Mapped[Term] = relationship(back_populates="passages")

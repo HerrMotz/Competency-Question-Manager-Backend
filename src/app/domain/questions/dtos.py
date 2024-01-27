@@ -6,6 +6,8 @@ from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from litestar.dto import DTOConfig
 
 from .models import Question
+from domain.terms.dtos import AnnotationAddDTO, AnnotationDTO
+
 
 
 class QuestionOverviewDTO(SQLAlchemyDTO[Question]):
@@ -25,7 +27,7 @@ class QuestionOverviewDTO(SQLAlchemyDTO[Question]):
 
 class QuestionDetailDTO(SQLAlchemyDTO[Question]):
     config = SQLAlchemyDTOConfig(
-        max_nested_depth=2,
+        max_nested_depth=3,
         include={
             "id",
             "question",
@@ -51,7 +53,9 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "consolidations.0.no_questions",
             "consolidations.0.project_id",
             "versions.0.question_string",
-            "versions.0.version_number"
+            "versions.0.version_number",
+            "annotations.0.content",
+            "annotations.0.term.content"
         },
         rename_strategy="camel",
     )
@@ -59,6 +63,7 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
 
 class QuestionCreate(BaseModel):
     question: str
+    annotations: list[AnnotationDTO] = []
 
 
 class QuestionCreateDTO(PydanticDTO[QuestionCreate]):
