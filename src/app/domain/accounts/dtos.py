@@ -7,20 +7,17 @@ from pydantic import EmailStr
 class UserGetDTO(BaseModel):
     id: UUID
     email: EmailStr
-    name: str
     is_system_admin: bool
     is_verified: bool
 
 
 class UserRegisterDTO(BaseModel):
     email: EmailStr
-    name: str
     password: str
 
 
 class UserUpdateDTO(BaseModel):
     email: EmailStr | None = None
-    name: str | None = None
     password: str | None = None
     is_system_admin: bool | None = None
     is_verified: bool | None = None
