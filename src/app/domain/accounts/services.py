@@ -192,7 +192,7 @@ class UserService:
 
         mails -= set(map(lambda user: user.email, existing_users))
         invited_users = [*map(lambda mail: UserService.create_temporary_user(encryption, mail), mails)]
-        session.add_all(invited_users)
+        session.add_all([user for user, _ in invited_users])
         await session.commit()
-        _ = [await session.refresh(user) for user in invited_users]
+        _ = [await session.refresh(user) for user, _ in invited_users]
         return InvitedUsers(existing_users, invited_users)
