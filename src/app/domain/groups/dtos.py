@@ -43,12 +43,10 @@ class GroupDetailDTO(SQLAlchemyDTO[Group]):
             "project.created_at",
             "project.updated_at",
             "members.0.id",
-            "members.0.name",
             "members.0.email",
             "questions.0.question",
             "questions.0.aggregated_rating",
             "questions.0.author.id",
-            "questions.0.author.name",
             "questions.0.author.email",
         },
     )

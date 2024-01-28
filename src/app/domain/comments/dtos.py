@@ -11,7 +11,7 @@ from .models import Comment
 class CommentDTO(SQLAlchemyDTO[Comment]):
     config = SQLAlchemyDTOConfig(
         rename_strategy="camel",
-        include={"id", "comment", "author_id", "question_id", "author.name", "created_at"},
+        include={"id", "comment", "author_id", "question_id", "created_at"},
     )
 
 
@@ -28,7 +28,6 @@ class CommentGet(BaseModel):
     comment: str
     author_id: UUID
     question_id: UUID
-    author_name: str
 
 
 class CommentGetDTO(PydanticDTO[CommentGet]):
