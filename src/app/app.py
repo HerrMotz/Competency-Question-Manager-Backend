@@ -14,6 +14,7 @@ from domain.groups.controllers import GroupController
 from domain.projects.controllers import ProjectController
 from domain.questions.controller import QuestionController
 from domain.ratings.controller import RatingController
+from lib.mails import MailService
 from lib.services import MockDataService
 from litestar import Litestar
 from litestar.config.cors import CORSConfig
@@ -26,6 +27,7 @@ authenticator = AuthenticationMiddleware("Super Secret Token", "Authorization", 
 encryption = EncryptionService()
 
 mock_data = MockDataService()
+mail_service = MailService.from_env()
 
 app = Litestar(
     route_handlers=[
@@ -45,5 +47,6 @@ app = Litestar(
     dependencies={
         "authenticator": authenticator.dependency,
         "encryption": encryption.dependency,
+        "mail_service": mail_service.dependency,
     },
 )
