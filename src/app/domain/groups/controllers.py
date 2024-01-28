@@ -60,6 +60,11 @@ class GroupController(Controller):
         """Gets a single `Group` belonging to a given `Project`."""
         return await GroupService.get_group(session, group_id, project_id, self.default_options)
 
+    @get("/direct/{group_id:uuid}", summary="Gets a single Group by its UUID only", return_dto=GroupDetailDTO)
+    async def get_direct_handler(self, session: AsyncSession, group_id: UUID) -> Group:
+        """Gets a single `Group`."""
+        return await GroupService.get_group(session, group_id, None, self.default_options)
+
     @post("/{project_id:uuid}", return_dto=GroupDTO)
     async def create_group_handler(
         self,
