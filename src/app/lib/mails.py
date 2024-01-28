@@ -1,14 +1,14 @@
+from __future__ import annotations
+
 import smtplib
 import ssl
-from contextlib import (  # pyright: ignore[reportPrivateUsage]
-    _GeneratorContextManager,
-    contextmanager,
-)
+from contextlib import _GeneratorContextManager, contextmanager  # pyright: ignore[reportPrivateUsage]
 from dataclasses import dataclass
 from email.mime.text import MIMEText
-from typing import Generator, Iterable, Literal, NamedTuple
+from os import environ
+from typing import Generator, Literal, NamedTuple
 
-import anyio.to_thread
+from litestar.concurrency import sync_to_thread
 from litestar.di import Provide
 
 MailParameters = NamedTuple("MailParameters", [("receiver", str), ("subject", str), ("body", str), ("html", bool)])
@@ -18,10 +18,11 @@ MailParameters = NamedTuple("MailParameters", [("receiver", str), ("subject", st
 class MailService:
     smtp_server: str
     port: int
-    username: str
-    password: str
-    sender: str
+    username: str = ""
+    password: str = ""
+    sender: str = "CQ-Manager"
     context: Literal["ssl", "tls"] = "ssl"
+    stdout: bool = True
 
     @contextmanager
     def _create_tls_context(self) -> Generator[smtplib.SMTP, None, None]:
@@ -57,34 +58,48 @@ class MailService:
 
     def send_email(self, receivers: list[str] | str, subject: str, body: str, html: bool = False):
         """Send a single mail to one or more receivers."""
+        if self.stdout:
+            print(f"Send message.")
+            return
         with self._create_context() as server:
             msg = self._create_message(receivers, subject, body, html)
             server.send_message(msg)
 
     async def send_email_async(self, receivers: list[str] | str, subject: str, body: str, html: bool = False):
         """Wraps `send_email` asynchronously using a worker thread."""
-        # TODO: maybe change the backend here? trio, anyio ... asyncio, litestar made some changes here in pr #2937:
-        # https://github.com/litestar-org/litestar/pull/2937
-        await anyio.to_thread.run_sync(self.send_email, receivers, subject, body, html)
+        await sync_to_thread(self.send_email, receivers, subject, body, html)
 
-    def send_emails(self, messages: Iterable[MailParameters]):
+    def send_emails(self, messages: list[MailParameters]):
         """Sends multiple distinct mails to various receivers.
 
         Notes:
             * sends multiple *different* mails instead of a single on (see `send_email`)
             * all mails are send under the same context (as opposed to multiple `send_email` calls)
         """
+        if self.stdout:
+            print(f"Send {len(messages)} messages.")
+            return
         with self._create_context() as server:
             for receiver, subject, body, html in messages:
                 msg = self._create_message(receiver, subject, body, html)
                 server.send_message(msg)
 
-    async def send_emails_async(self, messages: Iterable[MailParameters]):
+    async def send_emails_async(self, messages: list[MailParameters]):
         """Wraps `send_emails` asynchronously using a worker thread."""
-        # TODO: backend changes apply here as well
-        await anyio.to_thread.run_sync(self.send_emails, messages)
+        await sync_to_thread(self.send_emails, messages)
 
     @property
     def dependency(self) -> Provide:
         """Gets this middleware as dependency for litestar's dependency injection."""
         return Provide(lambda: self, sync_to_thread=False)
+
+    @classmethod
+    def from_env(cls) -> MailService:
+        smtp_server = environ.get("SMPT_SERVER")
+        port = environ.get("SMPT_PORT")
+        username = environ.get("SMPT_USER")
+        password = environ.get("SMPT_PASSWORD")
+        sender = environ.get("SMPT_SENDER")
+        context = environ.get("SMPT_SECURITY_CONTEXT")
+        stdout = environ.get("USE_SMPT")
+        return cls(smtp_server, int(port if port else "587"), username, password, sender, context, None if not stdout else True)  # pyright: ignore
