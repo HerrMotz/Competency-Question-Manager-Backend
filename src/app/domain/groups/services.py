@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Iterable, Sequence
 from uuid import UUID
 
@@ -84,9 +85,9 @@ class GroupService:
         if not data.emails:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)  # TODO: raise explicit exception
 
-        group = await GroupService.get_group(session, id, project_id, [selectinload(Group.members)])
         members = await UserService.get_or_create_users(session, encryption, data.emails)
-        group.members.extend([*members.existing, *members.created])
+        group = await GroupService.get_group(session, id, project_id, [selectinload(Group.members)])
+        group.members.extend(chain(members.existing, members.created))
         # TODO: send invitation mail to all members
 
         await session.commit()
