@@ -1,7 +1,9 @@
-from typing import Iterable, Sequence
+from functools import partial
+from typing import Coroutine, Iterable, Sequence
 from uuid import UUID
 
 from domain.accounts.authentication.services import EncryptionService
+from domain.accounts.mails import UserMailService
 from domain.accounts.models import User
 from domain.accounts.services import UserService
 from domain.groups.models import Group
@@ -12,13 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.base import ExecutableOption
 
-from .dtos import (
-    ProjectCreateDTO,
-    ProjectUpdateDTO,
-    ProjectUsersAddDTO,
-    ProjectUsersRemoveDTO,
-)
+from .dtos import ProjectCreateDTO, ProjectUpdateDTO, ProjectUsersAddDTO, ProjectUsersRemoveDTO
+from .mails import ProjectMailService
 from .models import Project
+
+AsyncCallable = Coroutine[None, None, None]
 
 
 class ProjectService:
@@ -52,24 +52,50 @@ class ProjectService:
         encryption: EncryptionService,
         data: ProjectCreateDTO,
         options: Iterable[ExecutableOption] | None = None,
-    ) -> Project:
+    ) -> tuple[
+        Project,
+        partial[AsyncCallable] | None,
+        partial[AsyncCallable] | None,
+        partial[AsyncCallable] | None,
+        partial[AsyncCallable] | None,
+    ]:
         managers: list[User] = []
+        managers_ = None
         if data.managers:
             managers_ = await UserService.get_or_create_users(session, encryption, data.managers)
-            managers.extend([*managers_.existing, *managers_.created])
-            # TODO: send invitation mail to all managers
+            managers.extend([*managers_.existing, *map(lambda u: u[0], managers_.created)])
 
         engineers: list[User] = []
+        engineers_ = None
         if data.engineers:
             engineers_ = await UserService.get_or_create_users(session, encryption, data.engineers)
-            engineers.extend([*engineers_.existing, *engineers_.created])
-            # TODO: send invitation mail to all engineers
+            engineers.extend([*engineers_.existing, *map(lambda u: u[0], engineers_.created)])
 
         project = Project(name=data.name, description=data.description, managers=managers, engineers=engineers)
         session.add(project)
         await session.commit()
         await session.refresh(project)
-        return await ProjectService.get_project(session, project.id, options)
+        project = await ProjectService.get_project(session, project.id, options)
+
+        invite_task1, invite_task2 = None, None
+        if managers_ and managers_.created:
+            invite_task1 = partial(UserMailService.send_invitation_mail, users=managers_)
+        if engineers_ and engineers_.created:
+            invite_task2 = partial(UserMailService.send_invitation_mail, users=engineers_)
+
+        manager_task = None
+        if managers_:
+            manager_task = partial(
+                ProjectMailService.send_invitation_mail, users=managers_, project=project, role="manager"
+            )
+
+        engineers_task = None
+        if engineers_:
+            engineers_task = partial(
+                ProjectMailService.send_invitation_mail, users=engineers_, project=project, role="ontology engineer"
+            )
+
+        return project, invite_task1, invite_task2, manager_task, engineers_task
 
     @staticmethod
     async def add_managers(
@@ -78,18 +104,27 @@ class ProjectService:
         id: UUID,
         data: ProjectUsersAddDTO,
         options: Iterable[ExecutableOption] | None = None,
-    ) -> Project:
+    ) -> tuple[Project, partial[AsyncCallable] | None, partial[AsyncCallable] | None]:
         if not data.emails:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)  # TODO: raise explicit exception
 
-        project = await ProjectService.get_project(session, id, [selectinload(Project.managers)])
         managers = await UserService.get_or_create_users(session, encryption, data.emails)
-        project.managers.extend([*managers.existing, *managers.created])
-        # TODO: send invitation mail to all managers
+        project = await ProjectService.get_project(session, id, [selectinload(Project.managers)])
+        project.managers.extend([*managers.existing, *map(lambda u: u[0], managers.created)])
+
+        initiation_task = None
+        if managers:
+            initiation_task = partial(UserMailService.send_invitation_mail, users=managers)
+
+        manager_task = None
+        if managers:
+            manager_task = partial(
+                ProjectMailService.send_invitation_mail, users=managers, project=project, role="manager"
+            )
 
         await session.commit()
         await session.refresh(project)
-        return await ProjectService.get_project(session, project.id, options)
+        return await ProjectService.get_project(session, project.id, options), initiation_task, manager_task
 
     @staticmethod
     async def remove_managers(
@@ -118,18 +153,27 @@ class ProjectService:
         id: UUID,
         data: ProjectUsersAddDTO,
         options: Iterable[ExecutableOption] | None = None,
-    ) -> Project:
+    ) -> tuple[Project, partial[AsyncCallable] | None, partial[AsyncCallable] | None]:
         if not data.emails:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)  # TODO: raise explicit exception
 
         engineers = await UserService.get_or_create_users(session, encryption, data.emails)
         project = await ProjectService.get_project(session, id, [selectinload(Project.engineers)])
-        project.engineers.extend([*engineers.existing, *engineers.created])
-        # TODO: send invitation mail to all engineers
+        project.engineers.extend([*engineers.existing, *map(lambda u: u[0], engineers.created)])
+
+        initiation_task = None
+        if engineers:
+            initiation_task = partial(UserMailService.send_invitation_mail, users=engineers)
+
+        engineers_task = None
+        if engineers:
+            engineers_task = partial(
+                ProjectMailService.send_invitation_mail, users=engineers, project=project, role="ontology engineer"
+            )
 
         await session.commit()
         await session.refresh(project)
-        return await ProjectService.get_project(session, project.id, options)
+        return await ProjectService.get_project(session, project.id, options), initiation_task, engineers_task
 
     @staticmethod
     async def remove_engineers(
