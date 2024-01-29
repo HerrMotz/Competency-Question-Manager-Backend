@@ -97,7 +97,7 @@ class ProjectController(Controller):
         project_id: UUID,
         data: JsonEncoded[ProjectUsersRemoveDTO],
     ) -> Project:
-        return await ProjectService.remove_managers(session, project_id, data)
+        return await ProjectService.remove_managers(session, project_id, data, self.default_options)
 
     @put("/{project_id:uuid}/engineers/add", return_dto=ProjectDTO)
     async def add_engineers_handler(
@@ -107,7 +107,7 @@ class ProjectController(Controller):
         project_id: UUID,
         data: JsonEncoded[ProjectUsersAddDTO],
     ) -> Project:
-        return await ProjectService.add_engineers(session, encryption, project_id, data)
+        return await ProjectService.add_engineers(session, encryption, project_id, data, self.default_options)
 
     @put("/{project_id:uuid}/engineers/remove", return_dto=ProjectDTO)
     async def remove_engineers_handler(
@@ -116,7 +116,7 @@ class ProjectController(Controller):
         project_id: UUID,
         data: JsonEncoded[ProjectUsersRemoveDTO],
     ) -> Project:
-        return await ProjectService.remove_engineers(session, project_id, data)
+        return await ProjectService.remove_engineers(session, project_id, data, self.default_options)
 
     @get("/my_projects", summary="Gets all Projects you are a part of", return_dto=ProjectDTO)
     async def my_projects(self, request: Request[User, Any, Any], session: AsyncSession) -> Sequence[Project]:

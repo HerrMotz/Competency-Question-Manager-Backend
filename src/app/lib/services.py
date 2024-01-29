@@ -33,6 +33,7 @@ class MockDataService:
             id=UUID("9811106f-0556-4cb6-9d00-292e6c026952"),
             version_number=1,
             question_id=UUID("2de6c0c8-3565-4c5a-bc85-3b5971e0e452"),
+            editor_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
         )
     ]
     mock_questions = [
@@ -41,6 +42,7 @@ class MockDataService:
             id=UUID("2de6c0c8-3565-4c5a-bc85-3b5971e0e452"),
             version_number=2,
             author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
+            editor_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
             group_id=UUID("b0488a1e-3768-4d34-8c90-f24f1f9036a3"),
             annotations=[
                 Passage(
@@ -55,6 +57,7 @@ class MockDataService:
             id=UUID("92bcacac-c5bf-4fe3-a12a-d52d5f3ac1f1"),
             version_number=1,
             author_id=UUID("e0ca0b85-2960-4f47-8a1c-1acda6d13b87"),
+            editor_id=UUID("e0ca0b85-2960-4f47-8a1c-1acda6d13b87"),
             group_id=UUID("a825cd37-f637-4853-bc73-97a2b01f18e7"),
         ),
         Question(
@@ -62,6 +65,7 @@ class MockDataService:
             id=UUID("968b9a07-463d-4e0d-a2ea-ba39c06e830d"),
             version_number=1,
             author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
+            editor_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
             group_id=UUID("a825cd37-f637-4853-bc73-97a2b01f18e7"),
         ),
     ]

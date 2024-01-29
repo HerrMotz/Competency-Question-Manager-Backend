@@ -82,8 +82,8 @@ class ProjectService:
         if not data.emails:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)  # TODO: raise explicit exception
 
-        project = await ProjectService.get_project(session, id, [selectinload(Project.managers)])
         managers = await UserService.get_or_create_users(session, encryption, data.emails)
+        project = await ProjectService.get_project(session, id, [selectinload(Project.managers)])
         project.managers.extend([*managers.existing, *managers.created])
         # TODO: send invitation mail to all managers
 

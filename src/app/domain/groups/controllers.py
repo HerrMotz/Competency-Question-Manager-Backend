@@ -60,6 +60,11 @@ class GroupController(Controller):
         """Gets a single `Group` belonging to a given `Project`."""
         return await GroupService.get_group(session, group_id, project_id, self.default_options)
 
+    @get("/direct/{group_id:uuid}", summary="Gets a single Group by its UUID only", return_dto=GroupDetailDTO)
+    async def get_direct_handler(self, session: AsyncSession, group_id: UUID) -> Group:
+        """Gets a single `Group`."""
+        return await GroupService.get_group(session, group_id, None, self.default_options)
+
     @post("/{project_id:uuid}", return_dto=GroupDTO)
     async def create_group_handler(
         self,
@@ -110,7 +115,7 @@ class GroupController(Controller):
         data: JsonEncoded[GroupUsersRemoveDTO],
     ) -> Group:
         """Removes members from a `Group` under a given `Project`."""
-        return await GroupService.remove_members(session, group_id, project_id, data)
+        return await GroupService.remove_members(session, group_id, project_id, data, self.default_options)
 
     @get("/my_groups", summary="Gets all Groups you are a member of", return_dto=GroupDTO)
     async def my_groups(self, request: Request[User, Any, Any], session: AsyncSession) -> Sequence[Group]:

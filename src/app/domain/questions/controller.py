@@ -20,7 +20,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from .dtos import QuestionCreate, QuestionCreateDTO, QuestionDetailDTO, QuestionOverviewDTO
+from .dtos import (
+    QuestionCreate,
+    QuestionCreateDTO,
+    QuestionDetailDTO,
+    QuestionOverviewDTO,
+)
 from .models import Question
 from domain.terms.services import AnnotationService
 from domain.terms.models import Passage
@@ -86,6 +91,7 @@ class QuestionController(Controller):
             question = Question(
                 question=data.question,
                 author_id=request.user.id,
+                editor_id=request.user.id,
                 group_id=group_id,
                 version_number=1,
                 annotations = passages
@@ -166,9 +172,10 @@ class QuestionController(Controller):
                 question_string=question.question,
                 version_number=question.version_number,
                 question_id=question.id,
+                editor_id=question.editor_id
             )
             session.add(version)
-            question.author_id = request.user.id
+            question.editor_id = request.user.id
             question.question = data.question
             question.version_number = question.version_number + 1
             session.add(question)

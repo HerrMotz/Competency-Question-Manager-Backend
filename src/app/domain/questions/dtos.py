@@ -39,6 +39,8 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "aggregated_rating",
             "author.id",
             "author.name",
+            "editor.id",
+            "editor.name",
             "group.id",
             "group.name",
             "group.project.id",
@@ -56,6 +58,9 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "versions.0.version_number",
             "annotations.0.content",
             "annotations.0.term.content"
+            "versions.0.version_number",
+            "versions.0.editor.name",
+            "versions.0.editor.id"
         },
         rename_strategy="camel",
     )
