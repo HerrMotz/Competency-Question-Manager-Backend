@@ -20,7 +20,7 @@ from litestar import Litestar
 from litestar.config.cors import CORSConfig
 from litestar.openapi import OpenAPIConfig
 
-cors_config = CORSConfig(allow_origins=[os.environ["CORS_ALLOW_ORIGIN"]])
+cors_config = CORSConfig(allow_origins=[os.environ["CORS_ALLOW_ORIGIN"]], expose_headers=["Permissions-Project-Manager", "Permissions-Project-Engineer", "Permissions-Project-Member", "Permissions-Group-Member", "Permissions-Project-Manager"])
 openapi_config = OpenAPIConfig("CQ Manager", "0.0.1", use_handler_docstrings=True)
 
 authenticator = AuthenticationMiddleware("Super Secret Token", "Authorization", 24)
