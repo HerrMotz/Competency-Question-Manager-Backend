@@ -21,9 +21,11 @@ class Question(UUIDAuditBase):
     version_number: Mapped[int]
     question: Mapped[str]
     author_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+    editor_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
     group_id: Mapped[UUID] = mapped_column(ForeignKey("group.id"))
 
-    author: Mapped[User] = relationship(back_populates="questions")
+    author: Mapped[User] = relationship(foreign_keys=[author_id], back_populates="questions")
+    editor: Mapped[User] = relationship(foreign_keys=[editor_id], back_populates="edited_questions")
     group: Mapped[Group] = relationship(back_populates="questions")
     ratings: Mapped[list[Rating]] = relationship(back_populates="question", cascade="all, delete-orphan")
     comments: Mapped[list[Comment]] = relationship(back_populates="question", cascade="all, delete-orphan")
