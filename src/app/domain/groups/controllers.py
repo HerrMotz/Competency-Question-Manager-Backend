@@ -115,7 +115,7 @@ class GroupController(Controller):
         data: JsonEncoded[GroupUsersRemoveDTO],
     ) -> Group:
         """Removes members from a `Group` under a given `Project`."""
-        return await GroupService.remove_members(session, group_id, project_id, data)
+        return await GroupService.remove_members(session, group_id, project_id, data, self.default_options)
 
     @get("/my_groups", summary="Gets all Groups you are a member of", return_dto=GroupDTO)
     async def my_groups(self, request: Request[User, Any, Any], session: AsyncSession) -> Sequence[Group]:
