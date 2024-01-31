@@ -88,6 +88,7 @@ class GroupController(Controller):
             tasks.append(BackgroundTask(invite_task, mail_service))
         if message_task:
             tasks.append(BackgroundTask(message_task, mail_service))
+        session.expunge_all()
         return Response(group, background=BackgroundTasks(tasks) if tasks else None)
 
     @put("/{project_id:uuid}/{group_id:uuid}", return_dto=GroupDTO)
@@ -132,6 +133,7 @@ class GroupController(Controller):
             tasks.append(BackgroundTask(invite_task, mail_service))
         if message_task:
             tasks.append(BackgroundTask(message_task, mail_service))
+        session.expunge_all()
         return Response(group, background=BackgroundTasks(tasks) if tasks else None)
 
     @put("/{project_id:uuid}/{group_id:uuid}/members/remove", return_dto=GroupDTO)

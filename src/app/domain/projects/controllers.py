@@ -79,6 +79,7 @@ class ProjectController(Controller):
             tasks.append(BackgroundTask(manager_task, mail_service))
         if engineers_task:
             tasks.append(BackgroundTask(engineers_task, mail_service))
+        session.expunge_all()
         return Response(project, background=BackgroundTasks(tasks))
 
     @put("/{project_id:uuid}", return_dto=ProjectDTO)
@@ -113,6 +114,7 @@ class ProjectController(Controller):
             tasks.append(BackgroundTask(invite_task, mail_service))
         if manager_task:
             tasks.append(BackgroundTask(manager_task, mail_service))
+        session.expunge_all()
         return Response(project, background=BackgroundTasks(tasks))
 
     @put("/{project_id:uuid}/managers/remove", return_dto=ProjectDTO)
@@ -139,6 +141,7 @@ class ProjectController(Controller):
             tasks.append(BackgroundTask(invite_task, mail_service))
         if engineer_task:
             tasks.append(BackgroundTask(engineer_task, mail_service))
+        session.expunge_all()
         return Response(project, background=BackgroundTasks(tasks))
 
     @put("/{project_id:uuid}/engineers/remove", return_dto=ProjectDTO)
