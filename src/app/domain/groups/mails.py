@@ -26,4 +26,4 @@ class GroupMailService:
             )
             for user in chain(map(lambda u: u[0], users.created), users.existing)
         ]
-        await mail_service.send_emails_async(mails)
+        await mail_service.send_emails(mails)

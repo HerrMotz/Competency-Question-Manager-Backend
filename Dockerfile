@@ -18,10 +18,7 @@ ENV CONNECTION_STRING="sqlite+aiosqlite:///cq-datbase.sqlite"
 
 ENV SMPT_SERVER=""
 ENV SMPT_PORT=""
-ENV SMPT_USER=""
-ENV SMPT_PASSWORD=""
 ENV SMPT_SENDER=""
-ENV SMPT_SECURITY_CONTEXT=""
 ENV USE_SMPT=""
 
 # Make port 8000 available to the world outside this container

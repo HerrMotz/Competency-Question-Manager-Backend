@@ -16,4 +16,4 @@ class UserMailService:
             MailParameters(user.email, UserMailService.subject, UserMailService.body(user.email, password), False)
             for user, password in users.created
         ]
-        await mail_service.send_emails_async(mails)
+        await mail_service.send_emails(mails)
