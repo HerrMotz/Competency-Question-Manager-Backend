@@ -24,7 +24,7 @@ class QuestionOverviewDTO(SQLAlchemyDTO[Question]):
 
 class QuestionDetailDTO(SQLAlchemyDTO[Question]):
     config = SQLAlchemyDTOConfig(
-        max_nested_depth=2,
+        max_nested_depth=3,
         include={
             "id",
             "question",
@@ -36,6 +36,8 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "aggregated_rating",
             "author.id",
             "author.email",
+            "editor.id",
+            "editor.email",
             "group.id",
             "group.name",
             "group.project.id",
@@ -48,9 +50,19 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "consolidations.0.id",
             "consolidations.0.name",
             "consolidations.0.no_questions",
-            "consolidations.0.project_id",
+            "consolidations.0.project.id",
+            "consolidations.0.project.name",
+            "consolidations.0.engineer.id",
+            "consolidations.0.engineer.email",
+            "consolidations.0.questions.0.id",
+            "consolidations.0.questions.0.group_id",
+            "consolidations.0.questions.0.question",
+            "consolidations.0.questions.0.author.id",
+            "consolidations.0.questions.0.author.email",
             "versions.0.question_string",
-            "versions.0.version_number"
+            "versions.0.version_number",
+            "versions.0.editor.id",
+            "versions.0.editor.email",
         },
         rename_strategy="camel",
     )

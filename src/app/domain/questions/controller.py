@@ -45,7 +45,10 @@ class QuestionController(Controller):
     detail_options = [
         selectinload(Question.author),
         selectinload(Question.ratings).options(selectinload(Rating.author)),
-        selectinload(Question.consolidations).options(selectinload(Consolidation.questions)),
+        selectinload(Question.consolidations).options(
+            selectinload(Consolidation.questions).options(selectinload(Question.author)),
+            selectinload(Consolidation.engineer),
+        ),
         selectinload(Question.group).options(selectinload(Group.project)),
         selectinload(Question.versions),
         selectinload(Question.comments).options(selectinload(Comment.author)),
@@ -76,6 +79,7 @@ class QuestionController(Controller):
             question = Question(
                 question=data.question,
                 author_id=request.user.id,
+                editor_id=request.user.id,
                 group_id=group_id,
                 version_number=1,
             )
@@ -153,9 +157,10 @@ class QuestionController(Controller):
                 question_string=question.question,
                 version_number=question.version_number,
                 question_id=question.id,
+                editor_id=question.editor_id,
             )
             session.add(version)
-            question.author_id = request.user.id
+            question.editor_id = request.user.id
             question.question = data.question
             question.version_number = question.version_number + 1
             session.add(question)

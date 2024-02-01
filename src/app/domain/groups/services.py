@@ -1,5 +1,6 @@
 from functools import partial
 from typing import Coroutine, Iterable, Sequence
+from itertools import chain
 from uuid import UUID
 
 from domain.accounts.authentication.services import EncryptionService
@@ -91,6 +92,7 @@ class GroupService:
     ) -> tuple[Group, partial[AsyncCallable] | None, partial[AsyncCallable] | None]:
         if not data.emails:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)  # TODO: raise explicit exception
+        
         group = await GroupService.get_group(
             session,
             id,
@@ -101,9 +103,10 @@ class GroupService:
             ],
         )
         members = await UserService.get_or_create_users(session, encryption, data.emails)
-        group.members.extend([*members.existing, *map(lambda u: u[0], members.created)])
+        group.members.extend(chain(members.existing, map(lambda u: u[0], members.created))
         invite_task = partial(UserMailService.send_invitation_mail, users=members) if members.created else None
         message_task = partial(GroupMailService.send_invitation_mail, users=members, group=group)
+
         await session.commit()
         await session.refresh(group)
         return await GroupService.get_group(session, group.id, project_id, options), invite_task, message_task
