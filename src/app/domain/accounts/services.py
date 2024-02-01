@@ -175,7 +175,7 @@ class UserService:
                 password_hash=password_hash.hash,
                 password_salt=password_hash.salt,
                 is_system_admin=False,
-                is_verified=False,
+                is_verified=True,
             ),
             password,
         )
