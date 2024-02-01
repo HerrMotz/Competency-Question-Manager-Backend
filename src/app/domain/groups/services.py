@@ -103,7 +103,7 @@ class GroupService:
             ],
         )
         members = await UserService.get_or_create_users(session, encryption, data.emails)
-        group.members.extend(chain(members.existing, map(lambda u: u[0], members.created))
+        group.members.extend(chain(members.existing, map(lambda u: u[0], members.created)))
         invite_task = partial(UserMailService.send_invitation_mail, users=members) if members.created else None
         message_task = partial(GroupMailService.send_invitation_mail, users=members, group=group)
 
