@@ -6,7 +6,7 @@ from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from litestar.dto import DTOConfig
 
 from .models import Question
-from domain.terms.dtos import AnnotationAddDTO, AnnotationDTO
+from domain.terms.dtos import AnnotationDTO
 
 
 
@@ -64,7 +64,9 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "consolidations.0.questions.0.author.email",
             "versions.0.question_string",
             "versions.0.version_number",
+            "annotations.0.id",
             "annotations.0.content",
+            "annotations.0.term.id"
             "annotations.0.term.content"
             "versions.0.version_number",
             "versions.0.editor.name",
