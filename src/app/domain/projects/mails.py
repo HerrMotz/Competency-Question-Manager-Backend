@@ -10,7 +10,7 @@ from .models import Project
 class ProjectMailService:
     @staticmethod
     def subject(name: str) -> str:
-        return f"Welcome to {name} on CQ-Manager!"
+        return f"Welcome to '{name}' on CQ-Manager!"
 
     @staticmethod
     def body(type: Literal["manager", "ontology engineer"], project: str) -> str:

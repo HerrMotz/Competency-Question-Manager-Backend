@@ -8,7 +8,7 @@ class UserMailService:
 
     @staticmethod
     def body(mail: str, password: str) -> str:
-        return f"You've been invited to join CQ-Manager!\n\n Your initial credentials are: '{mail}' & '{password}'."
+        return f"You've been invited to join CQ-Manager!\n\nYour initial credentials are: '{mail}' & '{password}'."
 
     @staticmethod
     async def send_invitation_mail(mail_service: MailService, users: InvitedUsers):

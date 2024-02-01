@@ -9,7 +9,7 @@ from .models import Group
 class GroupMailService:
     @staticmethod
     def subject(name: str) -> str:
-        return f"Welcome to {name} on CQ-Manager!"
+        return f"Welcome to '{name}' on CQ-Manager!"
 
     @staticmethod
     def body(group: str, project: str) -> str:
