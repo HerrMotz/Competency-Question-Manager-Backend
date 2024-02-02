@@ -50,8 +50,8 @@ class AnnotationService:
     ) -> Sequence[Question]:
         options = [] if not options else options
         subquery = select(Term).where(Term.id == term_id, Term.project_id == project_id).subquery()
-        statement = select(Question).join(Passage)
-        statement = statement.join(subquery, Passage.term_id == subquery.c.term_id)
+        statement = select(Question).join(Passage, Question.annotations)
+        statement = statement.join(subquery, Passage.term_id == subquery.c.id)
         statement = statement.options(*options)
         scalars = await session.scalars(statement)
         return scalars.all()
@@ -127,7 +127,8 @@ class AnnotationService:
                     Passage.questions.any(Question.id == question_id),
                 )
                 scalars = (await session.scalars(statement)).all()
-                _ = (question.annotations.remove(scalar) for scalar in scalars)
+                _ = [question.annotations.remove(scalar) for scalar in scalars]
+                await session.commit()
 
             if data.passage_ids:
                 statement = select(Passage).where(
@@ -135,9 +136,9 @@ class AnnotationService:
                     Passage.questions.any(Question.id == question_id),
                 )
                 scalars = (await session.scalars(statement)).all()
-                _ = (question.annotations.remove(scalar) for scalar in scalars)
+                _ = [question.annotations.remove(scalar) for scalar in scalars]
+                await session.commit()
 
-            await session.commit()
             scalars = await session.scalars(select(Passage).where(Passage.questions.any(Question.id == question_id)))
             return scalars.all()
         raise NotFoundException()
