@@ -10,6 +10,8 @@ from .dtos import AnnotationAddDTO, AnnotationRemove, AnnotationRemoveDTO, Passa
 from .models import Passage, Term
 from .services import AnnotationService
 
+from domain.questions.controller import QuestionController
+
 
 class TermController(Controller):
     tags = ["Terms"]
@@ -43,4 +45,6 @@ class TermController(Controller):
     @get("/{project_id:uuid}/{term_id:uuid}", summary="Get Question by Term", return_dto=QuestionOverviewDTO)
     async def get_by_term(self, session: AsyncSession, project_id: UUID, term_id: UUID) -> Sequence[Question]:
         """Gets all `Question`s within a given `Project` that share the given `Term`."""
-        return await AnnotationService.list_questions_by_term(session, term_id, project_id)
+        return await AnnotationService.list_questions_by_term(
+            session, term_id, project_id, QuestionController.default_options
+        )
