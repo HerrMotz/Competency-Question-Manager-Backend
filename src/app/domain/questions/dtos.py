@@ -66,8 +66,8 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "versions.0.version_number",
             "annotations.0.id",
             "annotations.0.content",
-            "annotations.0.term.id"
-            "annotations.0.term.content"
+            "annotations.0.term.id",
+            "annotations.0.term.content",
             "versions.0.version_number",
             "versions.0.editor.name",
             "versions.0.editor.id",
