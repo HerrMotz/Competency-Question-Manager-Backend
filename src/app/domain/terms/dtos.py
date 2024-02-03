@@ -17,7 +17,7 @@ class TermDTO(SQLAlchemyDTO[Term]):
 
 class PassageDTO(SQLAlchemyDTO[Passage]):
     config = SQLAlchemyDTOConfig(
-        include={"id", "author_id", "term_id", "content"},
+        include={"id", "term_id", "content"},
         rename_strategy="camel",
     )
 

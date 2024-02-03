@@ -50,8 +50,8 @@ class AnnotationService:
     ) -> Sequence[Question]:
         options = [] if not options else options
         subquery = select(Term).where(Term.id == term_id, Term.project_id == project_id).subquery()
-        statement = select(Question).join(Passage)
-        statement = statement.join(subquery, Passage.term_id == subquery.c.term_id)
+        statement = select(Question).join(Passage, Question.annotations)
+        statement = statement.join(subquery, Passage.term_id == subquery.c.id)
         statement = statement.options(*options)
         scalars = await session.scalars(statement)
         return scalars.all()
@@ -82,7 +82,7 @@ class AnnotationService:
         session.add(model)
         await session.commit()
         await session.refresh(model)
-        return await session.scalar(select(Passage).where(Passage.id == model.id).options(*options))  # pyright: ignore
+        return model # await session.scalar(select(Passage).where(Passage.id == model.id).options(*options))  # pyright: ignore
 
     @staticmethod
     async def annotate(
@@ -95,16 +95,21 @@ class AnnotationService:
         statement = (
             select(Question)
             .where(Question.id == question_id)
-            .options(selectinload(Question.annotations), selectinload(Question.group))
+            .options(
+                selectinload(Question.annotations).options(selectinload(Passage.term)),
+                selectinload(Question.group),
+                *options,
+            )
         )
         if question := await session.scalar(statement):
-            results: list[Passage] = []
             for annotation in data.annotations:
                 term = await AnnotationService.get_or_create_term(session, question.group.project_id, annotation.term)
                 passage = await AnnotationService.get_or_create_passage(session, term.id, annotation.passage)
-                question.annotations.append(passage)
-                results.append(passage)
-            return results
+                question = await session.scalar(statement)
+                assert question
+                if passage not in question.annotations:
+                    question.annotations.append(passage)
+            return question.annotations
         raise NotFoundException()
 
     @staticmethod
@@ -127,7 +132,8 @@ class AnnotationService:
                     Passage.questions.any(Question.id == question_id),
                 )
                 scalars = (await session.scalars(statement)).all()
-                _ = (question.annotations.remove(scalar) for scalar in scalars)
+                _ = [question.annotations.remove(scalar) for scalar in scalars]
+                await session.commit()
 
             if data.passage_ids:
                 statement = select(Passage).where(
@@ -135,9 +141,9 @@ class AnnotationService:
                     Passage.questions.any(Question.id == question_id),
                 )
                 scalars = (await session.scalars(statement)).all()
-                _ = (question.annotations.remove(scalar) for scalar in scalars)
+                _ = [question.annotations.remove(scalar) for scalar in scalars]
+                await session.commit()
 
-            await session.commit()
             scalars = await session.scalars(select(Passage).where(Passage.questions.any(Question.id == question_id)))
             return scalars.all()
         raise NotFoundException()
