@@ -82,7 +82,7 @@ class AnnotationService:
         session.add(model)
         await session.commit()
         await session.refresh(model)
-        return await session.scalar(select(Passage).where(Passage.id == model.id).options(*options))  # pyright: ignore
+        return model # await session.scalar(select(Passage).where(Passage.id == model.id).options(*options))  # pyright: ignore
 
     @staticmethod
     async def annotate(
@@ -95,16 +95,21 @@ class AnnotationService:
         statement = (
             select(Question)
             .where(Question.id == question_id)
-            .options(selectinload(Question.annotations), selectinload(Question.group))
+            .options(
+                selectinload(Question.annotations).options(selectinload(Passage.term)),
+                selectinload(Question.group),
+                *options,
+            )
         )
         if question := await session.scalar(statement):
-            results: list[Passage] = []
             for annotation in data.annotations:
                 term = await AnnotationService.get_or_create_term(session, question.group.project_id, annotation.term)
                 passage = await AnnotationService.get_or_create_passage(session, term.id, annotation.passage)
-                question.annotations.append(passage)
-                results.append(passage)
-            return results
+                question = await session.scalar(statement)
+                assert question
+                if passage not in question.annotations:
+                    question.annotations.append(passage)
+            return question.annotations
         raise NotFoundException()
 
     @staticmethod
