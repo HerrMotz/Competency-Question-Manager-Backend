@@ -58,7 +58,7 @@ class AnnotationService:
 
     @staticmethod
     async def get_or_create_term(session: AsyncSession, project_id: UUID, term: str) -> Term:
-        if model := await session.scalar(select(Term).where(Term.content == term)):
+        if model := await session.scalar(select(Term).where(Term.content == term, Term.project_id == project_id)):
             return model
 
         model = Term(content=term, project_id=project_id)
