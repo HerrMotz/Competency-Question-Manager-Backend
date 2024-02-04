@@ -221,7 +221,7 @@ class QuestionController(Controller):
     @get(
         "/by_project/{project_id:uuid}",
         summary="Gets all Questions that are part of a Project",
-        return_dto=QuestionDetailDTO,
+        return_dto=QuestionOverviewDTO,
     )
     async def by_project(self, session: AsyncSession, project_id: UUID) -> Sequence[Question]:
         """Gets all `Question`s that are part of a `Project`."""
