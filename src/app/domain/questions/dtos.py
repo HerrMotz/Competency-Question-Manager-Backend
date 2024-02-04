@@ -14,7 +14,8 @@ class QuestionOverviewDTO(SQLAlchemyDTO[Question]):
     config = SQLAlchemyDTOConfig(
         include={
             "id",
-            "group_id",
+            "group.id",
+            "group.name",
             "question",
             "rating",
             "author.id",
