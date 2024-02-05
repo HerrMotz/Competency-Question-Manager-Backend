@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from domain.groups.models import Group
     from domain.ratings.models import Rating
     from domain.versions.models import Version
+    from domain.terms.models import Passage
 
 
 class Question(UUIDAuditBase):
@@ -33,11 +34,12 @@ class Question(UUIDAuditBase):
         secondary="consolidated_questions", back_populates="questions"
     )
     versions: Mapped[list[Version]] = relationship(back_populates="question", cascade="all, delete-orphan")
-
-    @hybrid_property
-    def aggregated_rating(self) -> int:
-        return sum(map(lambda r: r.rating, self.ratings)) // len(self.ratings) if len(self.ratings) > 0 else 0
+    annotations: Mapped[list[Passage]] = relationship(secondary="annotated_passages", back_populates="questions")
 
     @hybrid_property
     def no_consolidations(self) -> int:
         return len(self.consolidations)
+
+    @hybrid_property
+    def aggregated_rating(self) -> int:
+        return sum(map(lambda r: r.rating, self.ratings)) // len(self.ratings) if len(self.ratings) > 0 else 0
