@@ -1,7 +1,7 @@
 import random
 import string
 from typing import Iterable, NamedTuple
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from pydantic import EmailStr
 from sqlalchemy import select
@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .authentication.exceptions import InvalidPasswordFormatException, InvalidPasswordLengthException
 from .authentication.services import EncryptionService, PasswordHash
 from .dtos import UserGetDTO, UserLoginDTO, UserRegisterDTO, UserUpdateDTO
-from .exceptions import DelegateHTTPException, EmailInUseException
+from .exceptions import DelegateHTTPException, EmailInUseException, NameInUseException
 from .models import User
 
 InvitedUsers = NamedTuple("InvitedUsers", [("existing", Iterable[User]), ("created", Iterable[tuple[User, str]])])
@@ -85,8 +85,15 @@ class UserService:
         :param data: Any updates that should be applied to the `User`.
         :return: The updated `User` if found.
         """
+        if data.email and await session.scalar(select(User).where(User.email == data.email)):
+            raise EmailInUseException(data.email)
+        
+        if data.name and await session.scalar(select(User).where(User.name == data.name)):
+            raise NameInUseException(data.name)
+
         if user := await session.scalar(select(User).where(User.id == user_id)):
             user.email = data.email if data.email else user.email
+            user.name = data.name if data.name else user.name
             user.is_system_admin = data.is_system_admin if data.is_system_admin else user.is_system_admin
             user.is_verified = data.is_verified if data.is_verified else user.is_verified
 
@@ -128,11 +135,15 @@ class UserService:
         :raises EmailInUseException: If the given `email` is not unique.
         :return: The new `User` if created.
         """
+        if await session.scalar(select(User).where(User.name == data.name)):
+            raise NameInUseException(data.name)
+
         if await session.scalar(select(User).where(User.email == data.email)):
             raise EmailInUseException(data.email)
 
         password = UserService._encrypt_password(encryption, data.password)
         user = User(
+            name=data.name,
             email=data.email,
             password_hash=password.hash,
             password_salt=password.salt,
@@ -157,9 +168,7 @@ class UserService:
 
     @staticmethod
     def create_temporary_user(encryption: EncryptionService, email: EmailStr) -> tuple[User, str]:
-        # TODO: remove this once we are sure names are dropped otherwise enhance this with
-        #       better collision detection/prevention, adding 2 digits does not do it
-        name = uuid4().hex
+        name = email
         sequence = [
             *random.sample(string.ascii_lowercase, 4),
             *random.sample(string.ascii_uppercase, 4),
