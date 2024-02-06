@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Sequence, TypeVar
 from uuid import UUID
-
+from lib.mails import MailService
 from domain.accounts.authentication.services import EncryptionService
 from domain.accounts.models import User
 from domain.groups.models import Group
@@ -14,7 +14,8 @@ from litestar.params import Body
 from litestar.status_codes import HTTP_404_NOT_FOUND
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
+from litestar.background_tasks import BackgroundTasks, BackgroundTask
+from litestar import Response
 from .dtos import (
     GroupCreateDTO,
     GroupDetailDTO,
@@ -72,9 +73,23 @@ class GroupController(Controller):
         encryption: EncryptionService,
         data: JsonEncoded[GroupCreateDTO],
         project_id: UUID,
-    ) -> Group:
+        mail_service: MailService,
+    ) -> Response[Group]:
         """Creates a `Group` under a given `Project`."""
-        return await GroupService.create(session, encryption, data, project_id, self.default_options)
+        tasks: list[BackgroundTask] = []
+        group, invite_task, message_task = await GroupService.create(
+            session,
+            encryption,
+            data,
+            project_id,
+            self.default_options,
+        )
+        if invite_task:
+            tasks.append(BackgroundTask(invite_task, mail_service))
+        if message_task:
+            tasks.append(BackgroundTask(message_task, mail_service))
+        session.expunge_all()
+        return Response(group, background=BackgroundTasks(tasks) if tasks else None)
 
     @put("/{project_id:uuid}/{group_id:uuid}", return_dto=GroupDTO)
     async def update_group_handler(
@@ -102,9 +117,24 @@ class GroupController(Controller):
         group_id: UUID,
         project_id: UUID,
         data: JsonEncoded[GroupUsersAddDTO],
-    ) -> Group:
+        mail_service: MailService,
+    ) -> Response[Group]:
         """Adds members to a `Group` under a given `Project`, `User`s are created the do not exists yet."""
-        return await GroupService.add_members(session, encryption, group_id, project_id, data, self.default_options)
+        tasks: list[BackgroundTask] = []
+        group, invite_task, message_task = await GroupService.add_members(
+            session,
+            encryption,
+            group_id,
+            project_id,
+            data,
+            self.default_options,
+        )
+        if invite_task:
+            tasks.append(BackgroundTask(invite_task, mail_service))
+        if message_task:
+            tasks.append(BackgroundTask(message_task, mail_service))
+        session.expunge_all()
+        return Response(group, background=BackgroundTasks(tasks) if tasks else None)
 
     @put("/{project_id:uuid}/{group_id:uuid}/members/remove", return_dto=GroupDTO)
     async def remove_members_handler(

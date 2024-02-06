@@ -10,7 +10,14 @@ from .models import IndividualRating, Rating
 
 class RatingGetDTO(SQLAlchemyDTO[Rating]):
     config = SQLAlchemyDTOConfig(
-        include={"rating", "question_id", "author.id", "author.name"}, rename_strategy="camel"
+        include={
+            "rating",
+            "question_id",
+            "author.id",
+            "author.email",
+            "author.name",
+        },
+        rename_strategy="camel",
     )
 
 

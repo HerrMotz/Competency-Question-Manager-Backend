@@ -1,22 +1,19 @@
 import random
 import string
 from typing import Iterable, NamedTuple
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .authentication.exceptions import (
-    InvalidPasswordFormatException,
-    InvalidPasswordLengthException,
-)
+from .authentication.exceptions import InvalidPasswordFormatException, InvalidPasswordLengthException
 from .authentication.services import EncryptionService, PasswordHash
 from .dtos import UserGetDTO, UserLoginDTO, UserRegisterDTO, UserUpdateDTO
 from .exceptions import DelegateHTTPException, EmailInUseException, NameInUseException
 from .models import User
 
-InvitedUsers = NamedTuple("InvitedUsers", [("existing", Iterable[User]), ("created", Iterable[User])])
+InvitedUsers = NamedTuple("InvitedUsers", [("existing", Iterable[User]), ("created", Iterable[tuple[User, str]])])
 
 
 class UserService:
@@ -88,6 +85,12 @@ class UserService:
         :param data: Any updates that should be applied to the `User`.
         :return: The updated `User` if found.
         """
+        if data.email and await session.scalar(select(User).where(User.email == data.email)):
+            raise EmailInUseException(data.email)
+        
+        if data.name and await session.scalar(select(User).where(User.name == data.name)):
+            raise NameInUseException(data.name)
+
         if user := await session.scalar(select(User).where(User.id == user_id)):
             user.email = data.email if data.email else user.email
             user.name = data.name if data.name else user.name
@@ -138,12 +141,10 @@ class UserService:
         if await session.scalar(select(User).where(User.email == data.email)):
             raise EmailInUseException(data.email)
 
-        uuid = uuid4()
         password = UserService._encrypt_password(encryption, data.password)
         user = User(
-            id=uuid,
-            email=data.email,
             name=data.name,
+            email=data.email,
             password_hash=password.hash,
             password_salt=password.salt,
             is_system_admin=False,
@@ -166,10 +167,8 @@ class UserService:
         return None
 
     @staticmethod
-    def create_temporary_user(encryption: EncryptionService, email: EmailStr) -> User:
-        # TODO: remove this once we are sure names are dropped otherwise enhance this with
-        #       better collision detection/prevention, adding 2 digits does not do it
-        name = uuid4().hex
+    def create_temporary_user(encryption: EncryptionService, email: EmailStr) -> tuple[User, str]:
+        name = email
         sequence = [
             *random.sample(string.ascii_lowercase, 4),
             *random.sample(string.ascii_uppercase, 4),
@@ -178,13 +177,16 @@ class UserService:
         random.shuffle(sequence)
         password = "".join(sequence)
         password_hash = UserService._encrypt_password(encryption, password)
-        return User(
-            email=email,
-            name=name,
-            password_hash=password_hash.hash,
-            password_salt=password_hash.salt,
-            is_system_admin=False,
-            is_verified=False,
+        return (
+            User(
+                email=email,
+                name=name,
+                password_hash=password_hash.hash,
+                password_salt=password_hash.salt,
+                is_system_admin=False,
+                is_verified=True,
+            ),
+            password,
         )
 
     @staticmethod
@@ -199,10 +201,7 @@ class UserService:
 
         mails -= set(map(lambda user: user.email, existing_users))
         invited_users = [*map(lambda mail: UserService.create_temporary_user(encryption, mail), mails)]
-        session.add_all(invited_users)
+        session.add_all([user for user, _ in invited_users])
         await session.commit()
-        _ = [await session.refresh(user) for user in invited_users]
-
-        # TODO: send invitation mail to all just created users
-
+        _ = [await session.refresh(user) for user, _ in invited_users]
         return InvitedUsers(existing_users, invited_users)

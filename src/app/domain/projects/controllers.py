@@ -13,7 +13,7 @@ from litestar.params import Body
 from litestar.status_codes import HTTP_404_NOT_FOUND
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
+from lib.mails import MailService
 from .dtos import (
     ProjectCreateDTO,
     ProjectDetailDTO,
@@ -25,6 +25,9 @@ from .dtos import (
 from .middleware import UserProjectPermissionsMiddleware
 from .models import Project
 from .services import ProjectService
+from litestar import Response
+from litestar.background_tasks import BackgroundTasks, BackgroundTask
+
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
@@ -62,8 +65,22 @@ class ProjectController(Controller):
         session: AsyncSession,
         encryption: EncryptionService,
         data: JsonEncoded[ProjectCreateDTO],
-    ) -> Project:
-        return await ProjectService.create(session, encryption, data, self.default_options)
+        mail_service: MailService,
+    ) -> Response[Project]:
+        tasks: list[BackgroundTask] = []
+        project, invite_task1, invite_task2, manager_task, engineers_task = await ProjectService.create(
+            session, encryption, data, self.default_options
+        )
+        if invite_task1:
+            tasks.append(BackgroundTask(invite_task1, mail_service))
+        if invite_task2:
+            tasks.append(BackgroundTask(invite_task2, mail_service))
+        if manager_task:
+            tasks.append(BackgroundTask(manager_task, mail_service))
+        if engineers_task:
+            tasks.append(BackgroundTask(engineers_task, mail_service))
+        session.expunge_all()
+        return Response(project, background=BackgroundTasks(tasks))
 
     @put("/{project_id:uuid}", return_dto=ProjectDTO)
     async def update_project_handler(
@@ -87,8 +104,18 @@ class ProjectController(Controller):
         encryption: EncryptionService,
         project_id: UUID,
         data: JsonEncoded[ProjectUsersAddDTO],
-    ) -> Project:
-        return await ProjectService.add_managers(session, encryption, project_id, data, self.default_options)
+        mail_service: MailService,
+    ) -> Response[Project]:
+        tasks: list[BackgroundTask] = []
+        project, invite_task, manager_task = await ProjectService.add_managers(
+            session, encryption, project_id, data, self.default_options
+        )
+        if invite_task:
+            tasks.append(BackgroundTask(invite_task, mail_service))
+        if manager_task:
+            tasks.append(BackgroundTask(manager_task, mail_service))
+        session.expunge_all()
+        return Response(project, background=BackgroundTasks(tasks))
 
     @put("/{project_id:uuid}/managers/remove", return_dto=ProjectDTO)
     async def remove_managers_handler(
@@ -106,8 +133,16 @@ class ProjectController(Controller):
         encryption: EncryptionService,
         project_id: UUID,
         data: JsonEncoded[ProjectUsersAddDTO],
-    ) -> Project:
-        return await ProjectService.add_engineers(session, encryption, project_id, data, self.default_options)
+        mail_service: MailService,
+    ) -> Response[Project]:
+        tasks: list[BackgroundTask] = []
+        project, invite_task, engineer_task = await ProjectService.add_engineers(session, encryption, project_id, data, self.default_options)
+        if invite_task:
+            tasks.append(BackgroundTask(invite_task, mail_service))
+        if engineer_task:
+            tasks.append(BackgroundTask(engineer_task, mail_service))
+        session.expunge_all()
+        return Response(project, background=BackgroundTasks(tasks))
 
     @put("/{project_id:uuid}/engineers/remove", return_dto=ProjectDTO)
     async def remove_engineers_handler(

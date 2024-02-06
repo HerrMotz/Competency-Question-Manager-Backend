@@ -1,8 +1,10 @@
+from functools import partial
+from typing import Coroutine, Iterable, Sequence
 from itertools import chain
-from typing import Iterable, Sequence
 from uuid import UUID
 
 from domain.accounts.authentication.services import EncryptionService
+from domain.accounts.mails import UserMailService
 from domain.accounts.models import User
 from domain.accounts.services import UserService
 from domain.projects.models import Project
@@ -14,7 +16,10 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.base import ExecutableOption
 
 from .dtos import GroupCreateDTO, GroupUpdateDTO, GroupUsersAddDTO, GroupUsersRemoveDTO
+from .mails import GroupMailService
 from .models import Group
+
+AsyncCallable = Coroutine[None, None, None]
 
 
 class GroupService:
@@ -60,18 +65,21 @@ class GroupService:
         data: GroupCreateDTO,
         project_id: UUID,
         options: Iterable[ExecutableOption] | None = None,
-    ) -> Group:
+    ) -> tuple[Group, partial[AsyncCallable] | None, partial[AsyncCallable] | None]:
+        options = options or []
         members: list[User] = []
+        members_ = None
         if data.members:
             members_ = await UserService.get_or_create_users(session, encryption, data.members)
-            members.extend([*members_.existing, *members_.created])
-            # TODO: send invitation mail to all members
-
+            members.extend([*members_.existing, *map(lambda u: u[0], members_.created)])
         group = Group(name=data.name, project_id=project_id, members=members)
         session.add(group)
         await session.commit()
         await session.refresh(group)
-        return await GroupService.get_group(session, group.id, project_id, options)
+        group = await GroupService.get_group(session, group.id, project_id, [*options, selectinload(Group.project)])
+        invite_task = partial(UserMailService.send_invitation_mail, users=members_) if members_ else None
+        message_task = partial(GroupMailService.send_invitation_mail, users=members_, group=group) if members_ else None
+        return group, invite_task, message_task
 
     @staticmethod
     async def add_members(
@@ -81,18 +89,30 @@ class GroupService:
         project_id: UUID,
         data: GroupUsersAddDTO,
         options: Iterable[ExecutableOption] | None = None,
-    ) -> Group:
+    ) -> tuple[Group, partial[AsyncCallable] | None, partial[AsyncCallable] | None]:
         if not data.emails:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)  # TODO: raise explicit exception
 
+        group = await GroupService.get_group(
+            session,
+            id,
+            project_id,
+            [
+                selectinload(Group.members),
+                selectinload(Group.project),
+            ],
+        )
         members = await UserService.get_or_create_users(session, encryption, data.emails)
-        group = await GroupService.get_group(session, id, project_id, [selectinload(Group.members)])
-        group.members.extend(chain(members.existing, members.created))
-        # TODO: send invitation mail to all members
+        group.members.extend(
+            filter(lambda x: x not in group.members, chain(members.existing, map(lambda u: u[0], members.created))),
+        )
+        
+        invite_task = partial(UserMailService.send_invitation_mail, users=members) if members.created else None
+        message_task = partial(GroupMailService.send_invitation_mail, users=members, group=group)
 
         await session.commit()
         await session.refresh(group)
-        return await GroupService.get_group(session, group.id, project_id, options)
+        return await GroupService.get_group(session, group.id, project_id, options), invite_task, message_task
 
     @staticmethod
     async def remove_members(

@@ -17,6 +17,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 ENV CORS_ALLOW_ORIGIN="*"
 ENV CONNECTION_STRING="sqlite+aiosqlite:///database/cq-database.sqlite"
 
+ENV SMPT_SERVER=""
+ENV SMPT_PORT=""
+ENV SMPT_SENDER=""
+ENV USE_SMPT=""
+
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
 
