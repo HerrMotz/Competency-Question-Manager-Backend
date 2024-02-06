@@ -11,7 +11,15 @@ from .models import Comment
 class CommentDTO(SQLAlchemyDTO[Comment]):
     config = SQLAlchemyDTOConfig(
         rename_strategy="camel",
-        include={"id", "comment", "author_id", "question_id", "created_at"},
+        include={
+            "id",
+            "comment",
+            "author.id",
+            "author.name",
+            "author.email",
+            "question_id",
+            "created_at",
+        },
     )
 
 
