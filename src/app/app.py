@@ -14,13 +14,14 @@ from domain.groups.controllers import GroupController
 from domain.projects.controllers import ProjectController
 from domain.questions.controller import QuestionController
 from domain.ratings.controller import RatingController
+from domain.terms.controllers import TermController
 from lib.mails import MailService
 from lib.services import MockDataService
 from litestar import Litestar
 from litestar.config.cors import CORSConfig
 from litestar.openapi import OpenAPIConfig
 
-cors_config = CORSConfig(allow_origins=[os.environ["CORS_ALLOW_ORIGIN"]])
+cors_config = CORSConfig(allow_origins=[os.environ["CORS_ALLOW_ORIGIN"]], expose_headers=["Permissions-Project-Manager", "Permissions-Project-Engineer", "Permissions-Project-Member", "Permissions-Group-Member", "Permissions-Project-Manager"])
 openapi_config = OpenAPIConfig("CQ Manager", "0.0.1", use_handler_docstrings=True)
 
 authenticator = AuthenticationMiddleware("Super Secret Token", "Authorization", 24)
@@ -38,6 +39,7 @@ app = Litestar(
         GroupController,
         ConsolidationController,
         CommentController,
+        TermController,
     ],
     cors_config=cors_config,
     openapi_config=openapi_config,

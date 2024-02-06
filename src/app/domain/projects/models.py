@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from domain.accounts.models import User
     from domain.consolidations.models import Consolidation
     from domain.groups.models import Group
+    from domain.terms.models import Term
 
 ProjectManagers = Table(
     "project_managers",
@@ -37,6 +38,7 @@ class Project(UUIDAuditBase):
     engineers: Mapped[list[User]] = relationship(secondary="project_engineers", back_populates="engineered_projects")
     groups: Mapped[list[Group]] = relationship(back_populates="project")
     consolidations: Mapped[list[Consolidation]] = relationship(back_populates="project")
+    terms: Mapped[list[Term]] = relationship(back_populates="project")
 
     @hybrid_property
     def no_managers(self) -> int:

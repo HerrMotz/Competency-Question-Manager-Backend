@@ -6,13 +6,16 @@ from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from litestar.dto import DTOConfig
 
 from .models import Question
+from domain.terms.dtos import AnnotationDTO
+
 
 
 class QuestionOverviewDTO(SQLAlchemyDTO[Question]):
     config = SQLAlchemyDTOConfig(
         include={
             "id",
-            "group_id",
+            "group.id",
+            "group.name",
             "question",
             "rating",
             "author.id",
@@ -72,6 +75,11 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
             "versions.0.editor.id",
             "versions.0.editor.email",
             "versions.0.editor.name",
+            "annotations.0.id",
+            "annotations.0.content",
+            "annotations.0.term.id",
+            "annotations.0.term.content",
+
         },
         rename_strategy="camel",
     )
@@ -79,6 +87,7 @@ class QuestionDetailDTO(SQLAlchemyDTO[Question]):
 
 class QuestionCreate(BaseModel):
     question: str
+    annotations: list[AnnotationDTO] = []
 
 
 class QuestionCreateDTO(PydanticDTO[QuestionCreate]):

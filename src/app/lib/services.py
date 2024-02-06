@@ -12,6 +12,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase
 
 from .orm import session as session_maker
+from domain.terms.models import Term
+from domain.terms.models import Passage
 
 
 class MockDataService:
@@ -42,6 +44,13 @@ class MockDataService:
             author_id=UUID("a8693768-244b-4b87-9972-548034df1cc3"),
             editor_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
             group_id=UUID("b0488a1e-3768-4d34-8c90-f24f1f9036a3"),
+            annotations=[
+                Passage(
+                    content="really",
+                    #author_id=UUID("a3fbf0c3-35cb-4774-8eba-10bdd1cbfb0c"),
+                    term_id=UUID("ec1b45bc-a901-4f0e-934b-bf90cb61855a"),
+                )
+            ],
         ),
         Question(
             question="Hot take: what if the earth is actually a cube?",
@@ -143,6 +152,14 @@ class MockDataService:
         ),
     ]
 
+    mock_terms = [
+        Term(
+            id=UUID("ec1b45bc-a901-4f0e-934b-bf90cb61855a"),
+            content="Reality",
+            project_id=UUID("7efa96ba-c7a9-4069-9728-dc7fa2c105fd"),
+        )
+    ]
+
     mock_ratings = [
         Rating(
             rating=4,
@@ -181,6 +198,7 @@ class MockDataService:
         *mock_projects,
         *mock_versions,
         *mock_comments,
+        *mock_terms,
     ]
 
     async def _add_mock_model(self, model: DeclarativeBase) -> None:

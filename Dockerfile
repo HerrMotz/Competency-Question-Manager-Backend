@@ -6,6 +6,7 @@ WORKDIR /usr/src/app
 
 # Copy the current directory contents into the container at /usr/src/app
 COPY requirements.txt .
+COPY ./src/app .
 
 # Install any needed packages specified in requirements.txt
 # Make sure you have a requirements.txt file with litestar and any other dependencies
@@ -14,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # For development purposes only
 ENV CORS_ALLOW_ORIGIN="*"
-ENV CONNECTION_STRING="sqlite+aiosqlite:///cq-datbase.sqlite"
+ENV CONNECTION_STRING="sqlite+aiosqlite:///database/cq-database.sqlite"
 
 ENV SMPT_SERVER=""
 ENV SMPT_PORT=""

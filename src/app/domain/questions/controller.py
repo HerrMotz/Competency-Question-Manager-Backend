@@ -27,6 +27,10 @@ from .dtos import (
     QuestionOverviewDTO,
 )
 from .models import Question
+from domain.terms.services import AnnotationService
+from domain.terms.models import Passage
+
+
 
 T = TypeVar("T")
 JsonEncoded = Annotated[T, Body(media_type=RequestEncodingType.JSON)]
@@ -41,6 +45,7 @@ class QuestionController(Controller):
         selectinload(Question.author),
         selectinload(Question.ratings),
         selectinload(Question.consolidations),
+        selectinload(Question.group).options(selectinload(Group.project)),
     ]
     detail_options = [
         selectinload(Question.author),
@@ -51,6 +56,7 @@ class QuestionController(Controller):
         ),
         selectinload(Question.group).options(selectinload(Group.project)),
         selectinload(Question.versions),
+        selectinload(Question.annotations).options(selectinload(Passage.term)),
         selectinload(Question.comments).options(selectinload(Comment.author)),
     ]
 
@@ -72,9 +78,18 @@ class QuestionController(Controller):
         :return: The created question data.
         """
         try:
-            statement = select(Group).where(Group.id == group_id)
-            if not await session.scalar(statement):
+            statement = select(Group).where(Group.id == group_id).options(selectinload(Group.project))
+            if not (group := await session.scalar(statement)):
                 raise HTTPException(status_code=404, detail="Group not found.")
+
+            passages: Sequence[Passage] = []
+            if data.annotations:
+                for annotation in data.annotations:
+                    term = await AnnotationService.get_or_create_term(
+                        session, group.project_id, annotation.term
+                    )
+                    passage = await AnnotationService.get_or_create_passage(session, term.id, annotation.passage)
+                    passages += [passage]
 
             question = Question(
                 question=data.question,
@@ -82,10 +97,13 @@ class QuestionController(Controller):
                 editor_id=request.user.id,
                 group_id=group_id,
                 version_number=1,
+                annotations = passages
             )
+
             session.add(question)
             await session.commit()
             await session.refresh(question)
+
             question = await session.scalar(
                 select(Question).where(Question.id == question.id).options(*self.detail_options)
             )
@@ -203,7 +221,7 @@ class QuestionController(Controller):
     @get(
         "/by_project/{project_id:uuid}",
         summary="Gets all Questions that are part of a Project",
-        return_dto=QuestionDetailDTO,
+        return_dto=QuestionOverviewDTO,
     )
     async def by_project(self, session: AsyncSession, project_id: UUID) -> Sequence[Question]:
         """Gets all `Question`s that are part of a `Project`."""
