@@ -110,7 +110,13 @@ class ProjectService:
 
         managers = await UserService.get_or_create_users(session, encryption, data.emails)
         project = await ProjectService.get_project(session, id, [selectinload(Project.managers)])
-        project.managers.extend([*managers.existing, *map(lambda u: u[0], managers.created)])
+
+        project.managers.extend(
+            filter(
+                lambda x: x not in project.managers,
+                [*managers.existing, *map(lambda u: u[0], managers.created)],
+            ),
+        )
 
         initiation_task = None
         if managers:
@@ -159,7 +165,13 @@ class ProjectService:
 
         engineers = await UserService.get_or_create_users(session, encryption, data.emails)
         project = await ProjectService.get_project(session, id, [selectinload(Project.engineers)])
-        project.engineers.extend([*engineers.existing, *map(lambda u: u[0], engineers.created)])
+
+        project.engineers.extend(
+            filter(
+                lambda x: x not in project.engineers,
+                [*engineers.existing, *map(lambda u: u[0], engineers.created)],
+            ),
+        )
 
         initiation_task = None
         if engineers:

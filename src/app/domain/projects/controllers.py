@@ -136,7 +136,7 @@ class ProjectController(Controller):
         mail_service: MailService,
     ) -> Response[Project]:
         tasks: list[BackgroundTask] = []
-        project, invite_task, engineer_task = await ProjectService.add_engineers(session, encryption, project_id, data)
+        project, invite_task, engineer_task = await ProjectService.add_engineers(session, encryption, project_id, data, self.default_options)
         if invite_task:
             tasks.append(BackgroundTask(invite_task, mail_service))
         if engineer_task:

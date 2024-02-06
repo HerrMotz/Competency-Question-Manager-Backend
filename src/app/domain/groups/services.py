@@ -92,7 +92,7 @@ class GroupService:
     ) -> tuple[Group, partial[AsyncCallable] | None, partial[AsyncCallable] | None]:
         if not data.emails:
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST)  # TODO: raise explicit exception
-        
+
         group = await GroupService.get_group(
             session,
             id,
@@ -103,7 +103,10 @@ class GroupService:
             ],
         )
         members = await UserService.get_or_create_users(session, encryption, data.emails)
-        group.members.extend(chain(members.existing, map(lambda u: u[0], members.created)))
+        group.members.extend(
+            filter(lambda x: x not in group.members, chain(members.existing, map(lambda u: u[0], members.created))),
+        )
+        
         invite_task = partial(UserMailService.send_invitation_mail, users=members) if members.created else None
         message_task = partial(GroupMailService.send_invitation_mail, users=members, group=group)
 
