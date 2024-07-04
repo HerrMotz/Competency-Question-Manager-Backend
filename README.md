@@ -5,3 +5,7 @@ A student project by:
 - Malte Weber (Backend)
 - Chiara Tunc (UX)
 - Daniel Motz (Frontend)
+
+
+## Functionality
+This tool enables team collaboration on Competency Questions for Ontologies.
