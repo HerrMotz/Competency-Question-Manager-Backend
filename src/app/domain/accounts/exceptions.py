@@ -11,8 +11,8 @@ from litestar.status_codes import (
 class UserNotFoundException(HTTPException):
     """Raised if a specified `User` was not found."""
 
-    def __init__(self, user_id: UUID) -> None:
-        detail = f"No user with id '{user_id}' was found."
+    def __init__(self, user_email: str) -> None:
+        detail = f"No user with id '{user_email}' was found."
         super().__init__(detail=detail, status_code=HTTP_404_NOT_FOUND)
 
 

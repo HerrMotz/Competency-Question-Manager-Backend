@@ -43,14 +43,14 @@ class UserService:
         return []
 
     @staticmethod
-    async def get_user(session: AsyncSession, user_id: UUID) -> UserGetDTO | None:
+    async def get_user(session: AsyncSession, user_email: str) -> UserGetDTO | None:
         """Gets a specific `User` by his `id`.
 
         :param session: An active database session.
-        :param user_id: The `Users` `id`.
+        :param user_email: The `Users` `email`.
         :return: The selected `User` if found.
         """
-        if user := await session.scalar(select(User).where(User.id == user_id)):
+        if user := await session.scalar(select(User).where(User.email == user_email)):
             return UserGetDTO.model_validate(user)
         return None
 
@@ -74,7 +74,7 @@ class UserService:
     async def update_user(
         session: AsyncSession,
         encryption: EncryptionService,
-        user_id: UUID,
+        user_email: EmailStr,
         data: UserUpdateDTO,
     ) -> UserGetDTO | None:
         """Updates a specific `User` by his `id` and the given data.
@@ -91,8 +91,7 @@ class UserService:
         if data.name and await session.scalar(select(User).where(User.name == data.name)):
             raise NameInUseException(data.name)
 
-        if user := await session.scalar(select(User).where(User.id == user_id)):
-            user.email = data.email if data.email else user.email
+        if user := await session.scalar(select(User).where(User.email == user_email)):
             user.name = data.name if data.name else user.name
             user.is_system_admin = data.is_system_admin if data.is_system_admin else user.is_system_admin
             user.is_verified = data.is_verified if data.is_verified else user.is_verified
@@ -106,14 +105,14 @@ class UserService:
         return None
 
     @staticmethod
-    async def delete_user(session: AsyncSession, user_id: UUID) -> bool:
+    async def delete_user(session: AsyncSession, user_email: str) -> bool:
         """Deletes a specific `User` by his `id`.
 
         :param session: An active database session.
         :param user_id: The `Users` `id`.
         :return: `True` if a `User` was removed else `False`.
         """
-        if user := await session.scalar(select(User).where(User.id == user_id)):
+        if user := await session.scalar(select(User).where(User.email == user_email)):
             await session.delete(user)
         return True if user else False
 
@@ -155,14 +154,14 @@ class UserService:
         return UserGetDTO.model_validate(user)
 
     @staticmethod
-    async def verify_user(session: AsyncSession, user_id: UUID) -> UserGetDTO | None:
+    async def verify_user(session: AsyncSession, user_email: str) -> UserGetDTO | None:
         """Directly verifies a specific `User` (alternative to `add_user`).
 
         :param session: An active database session.
-        :param user_id: The `Users` `id`.
+        :param user_email: The `Users` `email address`.
         :return: The updated `User` if found.
         """
-        if user := await session.scalar(select(User).where(User.id == user_id)):
+        if user := await session.scalar(select(User).where(User.email == user_email)):
             user.is_verified = True
             return UserGetDTO.model_validate(user)
         return None
