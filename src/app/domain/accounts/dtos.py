@@ -5,7 +5,6 @@ from pydantic import EmailStr
 
 
 class UserGetDTO(BaseModel):
-    id: UUID
     email: EmailStr
     name: str
     is_system_admin: bool

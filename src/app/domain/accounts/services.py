@@ -142,6 +142,7 @@ class UserService:
             raise EmailInUseException(data.email)
 
         password = UserService._encrypt_password(encryption, data.password)
+
         user = User(
             name=data.name,
             email=data.email,
