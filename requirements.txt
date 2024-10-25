@@ -1,4 +1,5 @@
 litestar[standard, structlog, jwt, sqlalchemy]
+aiosmtplib
 aiosqlite 
 pydantic
 pydantic[email]
