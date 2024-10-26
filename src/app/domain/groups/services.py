@@ -18,6 +18,7 @@ from sqlalchemy.sql.base import ExecutableOption
 from .dtos import GroupCreateDTO, GroupUpdateDTO, GroupUsersAddDTO, GroupUsersRemoveDTO
 from .mails import GroupMailService
 from .models import Group
+from .exceptions import EmptyNameException
 
 AsyncCallable = Coroutine[None, None, None]
 
@@ -66,6 +67,8 @@ class GroupService:
         project_id: UUID,
         options: Iterable[ExecutableOption] | None = None,
     ) -> tuple[Group, partial[AsyncCallable] | None, partial[AsyncCallable] | None]:
+        if not data.name:
+            raise EmptyNameException()
         options = options or []
         members: list[User] = []
         members_ = None
