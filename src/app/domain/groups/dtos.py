@@ -68,4 +68,4 @@ class GroupUsersRemoveDTO(BaseModel):
 
 
 class GroupUpdateDTO(BaseModel):
-    name: NonEmptyString | None
+    emails: list[EmailStr]
