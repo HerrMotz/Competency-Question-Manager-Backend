@@ -89,7 +89,7 @@ class GroupService:
         session: AsyncSession,
         encryption: EncryptionService,
         id: UUID,
-        project_id: UUID,
+        project_id: UUID | None,
         data: GroupUsersAddDTO,
         options: Iterable[ExecutableOption] | None = None,
     ) -> tuple[Group, partial[AsyncCallable] | None, partial[AsyncCallable] | None]:

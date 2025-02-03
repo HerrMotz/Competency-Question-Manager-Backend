@@ -161,3 +161,29 @@ class GroupController(Controller):
     ) -> Sequence[Group]:
         """Gets all `Group`s you are a member of, filtered by a `Project`."""
         return await GroupService.my_groups(session, request.user.id, project_id, self.default_options)
+
+    @post("/{group_id:uuid}/extend_members", return_dto=GroupDTO)
+    async def extend_members_handler(
+        self,
+        session: AsyncSession,
+        encryption: EncryptionService,
+        group_id: UUID,
+        data: JsonEncoded[GroupUsersAddDTO],
+        mail_service: MailService,
+    ) -> Response[Group]:
+        """Extends the list of members in a `Group`."""
+        tasks: list[BackgroundTask] = []
+        group, invite_task, message_task = await GroupService.add_members(
+            session,
+            encryption,
+            group_id,
+            None,
+            data,
+            self.default_options,
+        )
+        if invite_task:
+            tasks.append(BackgroundTask(invite_task, mail_service))
+        if message_task:
+            tasks.append(BackgroundTask(message_task, mail_service))
+        session.expunge_all()
+        return Response(group, background=BackgroundTasks(tasks) if tasks else None)
